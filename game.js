@@ -1,10 +1,9 @@
 (() => {
-  const CELL = 20;
-  const COLS = 30;
-  const ROWS = 30;
+  const CELL = 30;
+  const COLS = 18;
+  const ROWS = 15;
   const TARGET_EGGS = 15;
-  const BASE_STEP_MS = 160;
-  const MIN_STEP_MS = 80;
+  const STEP_MS = 150;
 
   const canvas = document.getElementById("gameCanvas");
   const ctx = canvas.getContext("2d");
@@ -12,20 +11,16 @@
   const confettiCtx = confettiCanvas.getContext("2d");
 
   const scoreEl = document.getElementById("score");
-  const speedEl = document.getElementById("speedDisplay");
-  const finalScoreEl = document.getElementById("finalScore");
 
   const startScreen = document.getElementById("startScreen");
-  const gameOverScreen = document.getElementById("gameOverScreen");
   const winScreen = document.getElementById("winScreen");
 
   const startBtn = document.getElementById("startBtn");
-  const retryBtn = document.getElementById("retryBtn");
   const playAgainBtn = document.getElementById("playAgainBtn");
 
-  let sperm, dir, nextDir, egg, score, alive, stepMs, acc, lastTime;
+  let sperm, dir, nextDir, egg, score, acc, lastTime;
   let animFrame = 0;
-  let state = "idle"; // idle | playing | gameover | win
+  let state = "idle"; // idle | playing | win
   let confettiParticles = [];
   let confettiRunning = false;
 
@@ -40,14 +35,11 @@
     dir = { x: 1, y: 0 };
     nextDir = { x: 1, y: 0 };
     score = 0;
-    alive = true;
-    stepMs = BASE_STEP_MS;
     acc = 0;
     lastTime = performance.now();
     animFrame = 0;
     egg = spawnEgg();
     scoreEl.textContent = "0";
-    speedEl.textContent = "1x";
   }
 
   function spawnEgg() {
@@ -104,29 +96,16 @@
   function step() {
     dir = nextDir;
     const head = sperm[0];
-    const newHead = { x: head.x + dir.x, y: head.y + dir.y };
-
-    if (
-      newHead.x < 0 ||
-      newHead.x >= COLS ||
-      newHead.y < 0 ||
-      newHead.y >= ROWS ||
-      sperm.some((s) => s.x === newHead.x && s.y === newHead.y)
-    ) {
-      alive = false;
-      state = "gameover";
-      finalScoreEl.textContent = String(score);
-      gameOverScreen.classList.remove("hidden");
-      return;
-    }
+    const newHead = {
+      x: (head.x + dir.x + COLS) % COLS,
+      y: (head.y + dir.y + ROWS) % ROWS,
+    };
 
     sperm.unshift(newHead);
 
     if (newHead.x === egg.x && newHead.y === egg.y) {
       score++;
       scoreEl.textContent = String(score);
-      stepMs = Math.max(MIN_STEP_MS, BASE_STEP_MS - score * 5);
-      speedEl.textContent = (BASE_STEP_MS / stepMs).toFixed(1) + "x";
 
       if (score >= TARGET_EGGS) {
         state = "win";
@@ -140,8 +119,8 @@
     }
   }
 
-  function headRadius() {
-    return Math.min(CELL * 0.55, CELL * 0.32 + score * 0.6);
+  function headSize() {
+    return Math.min(CELL * 0.5, CELL * 0.34 + score * 0.35);
   }
 
   function drawBackground() {
@@ -167,9 +146,9 @@
   function drawEgg() {
     const cx = egg.x * CELL + CELL / 2;
     const cy = egg.y * CELL + CELL / 2;
-    const r = CELL * 0.42;
+    const r = CELL * 0.4;
 
-    const grad = ctx.createRadialGradient(cx - 3, cy - 3, 2, cx, cy, r);
+    const grad = ctx.createRadialGradient(cx - 4, cy - 4, 2, cx, cy, r);
     grad.addColorStop(0, "#fff6e0");
     grad.addColorStop(0.5, "#ffd873");
     grad.addColorStop(1, "#ffb648");
@@ -178,79 +157,125 @@
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.fill();
 
+    ctx.strokeStyle = "rgba(255, 220, 150, 0.5)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.78, 0, Math.PI * 2);
+    ctx.stroke();
+
     ctx.fillStyle = "rgba(255,255,255,0.7)";
     ctx.beginPath();
-    ctx.arc(cx - r * 0.3, cy - r * 0.3, r * 0.25, 0, Math.PI * 2);
+    ctx.arc(cx - r * 0.3, cy - r * 0.3, r * 0.22, 0, Math.PI * 2);
     ctx.fill();
   }
 
+  // Converts a grid cell to pixel-space center, unwrapping around the torus
+  // edges relative to a reference point so a wrapped body doesn't draw a
+  // line straight across the board.
+  function toPixel(cell, ref) {
+    let x = cell.x;
+    let y = cell.y;
+    if (ref) {
+      if (x - ref.x > COLS / 2) x -= COLS;
+      if (ref.x - x > COLS / 2) x += COLS;
+      if (y - ref.y > ROWS / 2) y -= ROWS;
+      if (ref.y - y > ROWS / 2) y += ROWS;
+    }
+    return { x: x * CELL + CELL / 2, y: y * CELL + CELL / 2 };
+  }
+
   function drawSperm() {
-    // tail (flagellum) wiggling behind the last body segment
-    const tail = sperm[sperm.length - 1];
-    const prev = sperm[sperm.length - 2] || tail;
-    const dx = tail.x - prev.x || 1;
-    const dy = tail.y - prev.y || 0;
-
-    ctx.strokeStyle = "#7fd1ff";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    let sx = tail.x * CELL + CELL / 2;
-    let sy = tail.y * CELL + CELL / 2;
-    ctx.moveTo(sx, sy);
-    const segments = 5;
-    for (let i = 1; i <= segments; i++) {
-      const t = i / segments;
-      const wave = Math.sin(animFrame * 0.3 + i) * (CELL * 0.35) * t;
-      const px = sx + dx * CELL * t * 1.3;
-      const py = sy + dy * CELL * t * 1.3 + (dx !== 0 ? wave : 0);
-      const py2 = sy + dy * CELL * t * 1.3;
-      const px2 = px + (dy !== 0 ? wave : 0);
-      ctx.lineTo(dx !== 0 ? px2 : px, dy !== 0 ? py2 : py);
+    // Build a continuous, unwrapped point path through the whole body so the
+    // flagellum reads as one long tapering, wiggling tail behind an
+    // almond-shaped head, rather than a chain of separate blobs.
+    const points = [];
+    let ref = sperm[0];
+    for (const seg of sperm) {
+      const p = toPixel(seg, ref);
+      points.push(p);
+      ref = { x: p.x / CELL, y: p.y / CELL };
     }
-    ctx.stroke();
 
-    // body segments (excluding head), shrinking toward tail
-    for (let i = sperm.length - 1; i >= 1; i--) {
-      const seg = sperm[i];
-      const cx = seg.x * CELL + CELL / 2;
-      const cy = seg.y * CELL + CELL / 2;
-      const shrink = 1 - (i / sperm.length) * 0.4;
-      const r = headRadius() * 0.75 * shrink;
-      ctx.fillStyle = `rgba(140, 190, 255, ${0.5 + shrink * 0.4})`;
+    // extend a fine whip tip beyond the last real segment for extra realism
+    const last = points[points.length - 1];
+    const prev = points[points.length - 2] || last;
+    let tdx = last.x - prev.x;
+    let tdy = last.y - prev.y;
+    const tlen = Math.hypot(tdx, tdy) || 1;
+    tdx /= tlen;
+    tdy /= tlen;
+    const tipExtra = 3;
+    for (let i = 1; i <= tipExtra; i++) {
+      points.push({
+        x: last.x + tdx * CELL * 0.6 * i,
+        y: last.y + tdy * CELL * 0.6 * i,
+      });
+    }
+
+    // wiggle each point perpendicular to the local path direction
+    const wiggled = points.map((p, i) => {
+      if (i === 0) return p;
+      const a = points[i - 1];
+      let dx = p.x - a.x;
+      let dy = p.y - a.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const nx = -dy / len;
+      const ny = dx / len;
+      const t = i / points.length;
+      const amp = CELL * 0.22 * t;
+      const wave = Math.sin(animFrame * 0.25 - i * 0.9) * amp;
+      return { x: p.x + nx * wave, y: p.y + ny * wave };
+    });
+
+    // draw the flagellum as a tapering, translucent stroked path
+    const segCount = wiggled.length - 1;
+    for (let i = 0; i < segCount; i++) {
+      const t = i / segCount;
+      const width = Math.max(0.6, 3.2 * (1 - t));
+      const alpha = 0.85 * (1 - t * 0.6);
+      ctx.strokeStyle = `rgba(232, 226, 210, ${alpha})`;
+      ctx.lineWidth = width;
+      ctx.lineCap = "round";
       ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.moveTo(wiggled[i].x, wiggled[i].y);
+      ctx.lineTo(wiggled[i + 1].x, wiggled[i + 1].y);
+      ctx.stroke();
     }
 
-    // head
+    // head: an almond/oval shape typical of a real sperm cell
     const head = sperm[0];
     const hx = head.x * CELL + CELL / 2;
     const hy = head.y * CELL + CELL / 2;
-    const r = headRadius();
+    const r = headSize();
+    const angle = Math.atan2(dir.y, dir.x);
 
-    const grad = ctx.createRadialGradient(hx - 2, hy - 2, 1, hx, hy, r);
-    grad.addColorStop(0, "#eaf7ff");
-    grad.addColorStop(1, "#5fb4ff");
+    ctx.save();
+    ctx.translate(hx, hy);
+    ctx.rotate(angle);
+
+    const grad = ctx.createRadialGradient(
+      -r * 0.2,
+      -r * 0.2,
+      r * 0.1,
+      0,
+      0,
+      r * 1.2
+    );
+    grad.addColorStop(0, "#fffaf0");
+    grad.addColorStop(0.55, "#f0e6cf");
+    grad.addColorStop(1, "#d8c9a8");
     ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.ellipse(
-      hx,
-      hy,
-      r * 1.1,
-      r * 0.9,
-      Math.atan2(dir.y, dir.x),
-      0,
-      Math.PI * 2
-    );
+    ctx.ellipse(0, 0, r * 1.15, r * 0.78, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // little eyes for personality
-    const eyeOffsetX = dir.x * r * 0.4 - dir.y * r * 0.3;
-    const eyeOffsetY = dir.y * r * 0.4 + dir.x * r * 0.3;
-    ctx.fillStyle = "#12203a";
+    // acrosome cap: darker crescent over the front half of the head
+    ctx.fillStyle = "rgba(150, 130, 95, 0.35)";
     ctx.beginPath();
-    ctx.arc(hx + eyeOffsetX, hy + eyeOffsetY, r * 0.14, 0, Math.PI * 2);
+    ctx.ellipse(r * 0.25, 0, r * 0.72, r * 0.55, 0, -Math.PI / 2, Math.PI / 2);
     ctx.fill();
+
+    ctx.restore();
   }
 
   function render() {
@@ -266,9 +291,9 @@
     acc += delta;
     animFrame++;
 
-    while (acc >= stepMs) {
-      if (alive) step();
-      acc -= stepMs;
+    while (acc >= STEP_MS) {
+      step();
+      acc -= STEP_MS;
       if (state !== "playing") break;
     }
 
@@ -280,7 +305,6 @@
     resetGame();
     state = "playing";
     startScreen.classList.add("hidden");
-    gameOverScreen.classList.add("hidden");
     winScreen.classList.add("hidden");
     stopConfetti();
     lastTime = performance.now();
@@ -288,7 +312,6 @@
   }
 
   startBtn.addEventListener("click", startGame);
-  retryBtn.addEventListener("click", startGame);
   playAgainBtn.addEventListener("click", startGame);
 
   // ---- Confetti ----
@@ -321,12 +344,10 @@
     if (!confettiRunning) return;
     confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
 
-    let anyActive = false;
     for (const p of confettiParticles) {
       p.y += p.speedY;
       p.x += p.speedX;
       p.rotation += p.rotSpeed;
-      if (p.y < confettiCanvas.height + 20) anyActive = true;
 
       confettiCtx.save();
       confettiCtx.translate(p.x, p.y);

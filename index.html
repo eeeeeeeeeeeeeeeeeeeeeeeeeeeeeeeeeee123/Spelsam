@@ -15,29 +15,18 @@
           <span class="label">Eicellen</span>
           <span id="score">0</span> / <span id="target">15</span>
         </div>
-        <div class="stat">
-          <span class="label">Snelheid</span>
-          <span id="speedDisplay">1x</span>
-        </div>
       </div>
     </header>
 
     <div id="gameWrap">
-      <canvas id="gameCanvas" width="600" height="600"></canvas>
-      <canvas id="confettiCanvas" width="600" height="600"></canvas>
+      <canvas id="gameCanvas" width="540" height="450"></canvas>
+      <canvas id="confettiCanvas" width="540" height="450"></canvas>
 
       <div id="startScreen" class="overlay">
         <h2>Zaadcel op Missie 🏊</h2>
         <p>Bestuur de zaadcel met de <strong>pijltjestoetsen</strong> of <strong>WASD</strong>.</p>
-        <p>Vang <strong>15 eicellen</strong> om een baby te maken!</p>
-        <p>Raak je eigen staart of de rand niet aan, anders is het game over.</p>
+        <p>Vang <strong>15 eicellen</strong> om een baby te maken! Ga je rand uit? Dan zwem je gewoon aan de andere kant weer verder.</p>
         <button id="startBtn">Start het Avontuur</button>
-      </div>
-
-      <div id="gameOverScreen" class="overlay hidden">
-        <h2>Game Over 💥</h2>
-        <p>Je verzamelde <span id="finalScore">0</span> eicellen.</p>
-        <button id="retryBtn">Probeer Opnieuw</button>
       </div>
 
       <div id="winScreen" class="overlay hidden">
