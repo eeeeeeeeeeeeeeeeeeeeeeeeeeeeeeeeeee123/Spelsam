@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Race naar het Leven 🐣</title>
+<title>Race naar het Leven</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,10 +11,9 @@
     <header>
       <h1>Race naar het Leven</h1>
       <div id="hud">
-        <div class="stat">
-          <span class="label">Eicellen</span>
-          <span id="score">0</span> / <span id="target">15</span>
-        </div>
+        <span id="levelLabel"></span>
+        <span id="hearts"></span>
+        <span id="progress"></span>
       </div>
     </header>
 
@@ -22,20 +21,52 @@
       <canvas id="gameCanvas" width="540" height="450"></canvas>
       <canvas id="confettiCanvas" width="540" height="450"></canvas>
 
+      <div id="wordPanel" class="hidden">
+        <div class="word-label">Typ dit woord over:</div>
+        <div id="wordTarget"></div>
+        <div class="timer-track"><div id="wordTimer"></div></div>
+        <div class="word-row">
+          <input id="wordInput" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+          <button id="wordSubmit">OK</button>
+        </div>
+        <div id="wordFeedback"></div>
+      </div>
+
       <div id="startScreen" class="overlay">
         <h2>Zaadcel op Missie 🏊</h2>
-        <p>Bestuur de zaadcel met de <strong>pijltjestoetsen</strong> of <strong>WASD</strong>.</p>
-        <p>Vang <strong>15 eicellen</strong> om een baby te maken! Ga je rand uit? Dan zwem je gewoon aan de andere kant weer verder.</p>
+        <p>Zwem de hele route naar de eicel in <strong>7 levels</strong>.</p>
+        <p>Je hebt <strong>3 hartjes</strong>. Elke fout kost er één en dan probeer je het level opnieuw. Alle hartjes op? Dan begin je weer bij level 1.</p>
         <button id="startBtn">Start het Avontuur</button>
       </div>
 
+      <div id="introScreen" class="overlay hidden">
+        <div id="introDone" class="done hidden"></div>
+        <h2 id="introTitle"></h2>
+        <p id="introText"></p>
+        <button id="introBtn">Start level</button>
+      </div>
+
+      <div id="failScreen" class="overlay hidden">
+        <h2>Au! 💔</h2>
+        <p id="failReason"></p>
+        <p id="failHearts"></p>
+        <button id="retryBtn">Probeer opnieuw</button>
+      </div>
+
+      <div id="gameOverScreen" class="overlay hidden">
+        <h2>Game Over 💥</h2>
+        <p id="gameOverReason"></p>
+        <p>Je hartjes zijn op. Terug naar level 1!</p>
+        <button id="restartBtn">Opnieuw beginnen</button>
+      </div>
+
       <div id="winScreen" class="overlay hidden">
-        <h2>Gefeliciteerd! 🎉</h2>
+        <h2>Bevruchting gelukt! 🎉</h2>
         <div id="babyStage">
           <div id="baby">👶</div>
         </div>
-        <p>Het is een nieuw leven! Je hebt alle 15 eicellen bevrucht.</p>
-        <button id="playAgainBtn">Nog een Keer</button>
+        <p>Jouw zaadcel heeft de eicel bereikt. Er groeit nu een baby!</p>
+        <button id="playAgainBtn">Nog een keer</button>
       </div>
     </div>
 
@@ -46,9 +77,19 @@
         <button data-dir="down">▼</button>
         <button data-dir="right">▶</button>
       </div>
+      <button id="actionBtn">SPATIE</button>
     </div>
   </div>
 
-  <script src="game.js"></script>
+  <script src="src/shared.js"></script>
+  <script src="src/snake.js"></script>
+  <script src="src/level1-vagina.js"></script>
+  <script src="src/level2-cervix.js"></script>
+  <script src="src/level3-uterus.js"></script>
+  <script src="src/level4-words.js"></script>
+  <script src="src/level5-tube.js"></script>
+  <script src="src/level6-rivals.js"></script>
+  <script src="src/level7-egg.js"></script>
+  <script src="src/main.js"></script>
 </body>
 </html>

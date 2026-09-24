@@ -53,15 +53,113 @@ h1 {
   display: flex;
   gap: 24px;
   background: var(--panel);
+  flex-wrap: wrap;
+  justify-content: center;
   padding: 8px 20px;
   border-radius: 12px;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
-#hud .label {
-  opacity: 0.6;
-  margin-right: 6px;
-  font-size: 0.8rem;
+#levelLabel {
+  opacity: 0.75;
+}
+
+#progress:empty {
+  display: none;
+}
+
+#wordPanel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 8;
+  width: min(420px, 90%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px;
+  border-radius: 16px;
+  background: rgba(20, 10, 30, 0.82);
+  text-align: center;
+}
+
+#wordPanel.hidden {
+  display: none;
+}
+
+.word-label {
+  opacity: 0.7;
+  font-size: 0.9rem;
+}
+
+#wordTarget {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  user-select: none;
+}
+
+.timer-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.15);
+  overflow: hidden;
+}
+
+#wordTimer {
+  height: 100%;
+  width: 100%;
+  background: #ffd873;
+}
+
+.word-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+#wordInput {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  font-size: 1.1rem;
+  border-radius: 10px;
+  border: 2px solid #3a3f6a;
+  background: #0f1330;
+  color: var(--text);
+}
+
+#wordInput:focus {
+  outline: none;
+  border-color: var(--accent2);
+}
+
+#wordSubmit {
+  margin: 0;
+  padding: 10px 18px;
+}
+
+#wordFeedback {
+  min-height: 1.2em;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+#wordFeedback.good {
+  color: #a0ffb4;
+}
+
+.done {
+  color: #a0ffb4;
+  font-weight: 700;
+}
+
+.done.hidden {
+  display: none;
 }
 
 #gameWrap {
@@ -187,6 +285,12 @@ button:active {
   height: 56px;
   font-size: 1.2rem;
   border-radius: 14px;
+  touch-action: manipulation;
+}
+
+#touchControls #actionBtn {
+  width: 180px;
+  font-size: 1rem;
 }
 
 @media (hover: none) and (pointer: coarse) {
