@@ -1,5 +1,5 @@
 (() => {
-  const LEVELS = [G.level1, G.level2, G.level3, G.level4, G.level5, G.level6, G.level7];
+  const LEVELS = [G.level1, G.level2, G.level3, G.level4, G.level5, G.level6, G.level7, G.level8, G.level9];
   const MAX_HEARTS = 3;
 
   const canvas = document.getElementById("gameCanvas");
@@ -110,17 +110,23 @@
 
   // ---- Input ----
   const KEY_DIRS = {
-    ArrowUp: [0, -1],
-    ArrowDown: [0, 1],
-    ArrowLeft: [-1, 0],
-    ArrowRight: [1, 0],
-    w: [0, -1],
-    s: [0, 1],
-    a: [-1, 0],
-    d: [1, 0],
+    ArrowUp: "up",
+    ArrowDown: "down",
+    ArrowLeft: "left",
+    ArrowRight: "right",
+    w: "up",
+    s: "down",
+    a: "left",
+    d: "right",
   };
+  const DIR_VECTORS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 
-  function direction(dx, dy, repeat) {
+  // Held directions, for levels with free movement instead of discrete steps.
+  G.held = { up: false, down: false, left: false, right: false };
+
+  function direction(name, repeat) {
+    G.held[name] = true;
+    const [dx, dy] = DIR_VECTORS[name];
     if (mode === "playing") level().onDirection?.(dx, dy, repeat);
   }
 
@@ -128,25 +134,40 @@
     if (mode === "playing") level().onAction?.();
   }
 
+  const keyName = (e) => KEY_DIRS[e.key.length === 1 ? e.key.toLowerCase() : e.key];
+
   window.addEventListener("keydown", (e) => {
     if (e.target instanceof HTMLInputElement) return;
-    const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-    const d = KEY_DIRS[key];
-    if (d) {
+    const name = keyName(e);
+    if (name) {
       e.preventDefault();
-      direction(d[0], d[1], e.repeat);
+      direction(name, e.repeat);
     } else if (e.code === "Space") {
       e.preventDefault();
       if (!e.repeat) action();
     }
   });
 
+  window.addEventListener("keyup", (e) => {
+    const name = keyName(e);
+    if (name) G.held[name] = false;
+  });
+
+  window.addEventListener("blur", () => {
+    for (const name of Object.keys(G.held)) G.held[name] = false;
+  });
+
   document.querySelectorAll("#touchControls [data-dir]").forEach((btn) => {
-    const d = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[btn.dataset.dir];
+    const name = btn.dataset.dir;
     btn.addEventListener("pointerdown", (e) => {
       e.preventDefault();
-      direction(d[0], d[1], false);
+      direction(name, false);
     });
+    for (const type of ["pointerup", "pointercancel", "pointerleave"]) {
+      btn.addEventListener(type, () => {
+        G.held[name] = false;
+      });
+    }
   });
   document.getElementById("actionBtn").addEventListener("pointerdown", (e) => {
     e.preventDefault();
