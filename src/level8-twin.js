@@ -14,6 +14,7 @@
   const ARROWS = { "0,-1": "↑", "0,1": "↓", "-1,0": "←", "1,0": "→" };
   const DIRS = [[0, -1], [0, 1], [-1, 0], [1, 0]];
   const SWORD_ANGLE = -0.6;
+  const MAX_MISTAKES = 3;
 
   function drawPlacenta(ctx, t) {
     ctx.fillStyle = "#7a1f3d";
@@ -53,7 +54,8 @@
     intro:
       "Een paar maanden later... Je groeit in de buik. Maar wacht: <strong>je bent niet alleen!</strong><br>" +
       "Bijt je <strong>navelstreng</strong> door: druk op <strong>SPATIE</strong> als het streepje in het groene vak staat (5 keer).<br>" +
-      "Kerf er dan een <strong>zwaard</strong> van door de <strong>pijltjes</strong> na te typen. Je tweeling doet hetzelfde: wees sneller!",
+      "Kerf er dan een <strong>zwaard</strong> van door de <strong>pijltjes</strong> na te typen. Je tweeling doet hetzelfde: wees sneller!<br>" +
+      "Let op: <strong>3 keer mis bijten</strong> of <strong>3 verkeerde pijltjes</strong> kost een hartje.",
 
     drawBackground(ctx, t) {
       G.drawWomb(ctx, t);
@@ -70,6 +72,8 @@
       this.markerDir = 1;
       this.zone = this.newZone();
       this.missFlash = 0;
+      this.misses = 0;
+      this.wrongs = 0;
       this.sequences = SEQUENCES.map((n) => Array.from({ length: n }, () => G.pick(DIRS)));
       this.seqIndex = 0;
       this.keyIndex = 0;
@@ -95,6 +99,8 @@
         if (this.bites >= BITES) this.phase = "carve";
       } else {
         this.missFlash = 300;
+        this.misses++;
+        if (this.misses >= MAX_MISTAKES) this.api.fail("Je hebt 3 keer mis gebeten!");
       }
     },
 
@@ -112,6 +118,8 @@
       } else {
         this.keyIndex = 0;
         this.wrongFlash = 300;
+        this.wrongs++;
+        if (this.wrongs >= MAX_MISTAKES) this.api.fail("Je drukte 3 keer het verkeerde pijltje!");
       }
     },
 
@@ -171,6 +179,12 @@
       ctx.font = "12px Segoe UI, Roboto, sans-serif";
       ctx.textAlign = "right";
       ctx.fillText("Tweeling", W - 20, 104);
+
+      const mistakes = this.phase === "bite" ? this.misses : this.wrongs;
+      ctx.textAlign = "left";
+      ctx.font = "bold 14px Segoe UI, Roboto, sans-serif";
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.fillText(`Missers: ${"✗".repeat(mistakes)}${"·".repeat(MAX_MISTAKES - mistakes)}`, 10, 20);
 
       const barX = W / 2 - 150;
       const barY = H - 42;
