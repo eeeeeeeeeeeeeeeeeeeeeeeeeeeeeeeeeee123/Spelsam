@@ -40,10 +40,10 @@
   }
 
   G.c2level9 = {
-    title: "Level 9 — De laatste therapie (11 jaar)",
+    title: "Level 9 — Therapie (11 jaar)",
     intro:
-      "Je bent uit de jeugdinrichting en in <strong>therapie</strong>. Dit is je <strong>allerlaatste sessie</strong>.<br>" +
-      "Aan het eind maak je een keuze. Let op: een verkeerde keuze betekent dat je <strong>helemaal opnieuw</strong> begint, hoeveel hartjes je ook hebt.",
+      "Je bent weer thuis en gaat naar <strong>therapie</strong>. Dit is je laatste sessie.<br>" +
+      "Soms moet je een keuze maken: kies met <strong>← →</strong> en bevestig met <strong>SPATIE</strong>, of tik op een knop.",
 
     drawBackground(ctx, t) {
       drawOffice(ctx, t);

@@ -52,10 +52,9 @@
   G.level8 = {
     title: "Level 8 — De buik",
     intro:
-      "Een paar maanden later... Je groeit in de buik. Maar wacht: <strong>je bent niet alleen!</strong><br>" +
-      "Bijt je <strong>navelstreng</strong> door: druk op <strong>SPATIE</strong> als het streepje in het groene vak staat (5 keer).<br>" +
-      "Kerf er dan een <strong>zwaard</strong> van door de <strong>pijltjes</strong> na te typen. Je tweeling doet hetzelfde: wees sneller!<br>" +
-      "Let op: <strong>3 keer mis bijten</strong> of <strong>3 verkeerde pijltjes</strong> kost een hartje.",
+      "Een paar maanden later... Je groeit in de buik.<br>" +
+      "Druk op <strong>SPATIE</strong> als het streepje in het groene vak staat. Daarna typ je <strong>pijltjes</strong> na. Wees snel!<br>" +
+      "<strong>3 keer mis</strong> of <strong>3 verkeerde pijltjes</strong> kost een hartje.",
 
     drawBackground(ctx, t) {
       G.drawWomb(ctx, t);

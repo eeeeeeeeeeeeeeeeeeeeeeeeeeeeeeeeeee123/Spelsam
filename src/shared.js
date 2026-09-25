@@ -8,8 +8,10 @@ window.G = window.G || {};
   G.CELL = CELL;
   G.COLS = COLS;
   G.ROWS = ROWS;
-  G.W = COLS * CELL;
-  G.H = ROWS * CELL;
+  const W = COLS * CELL;
+  const H = ROWS * CELL;
+  G.W = W;
+  G.H = H;
 
   G.randInt = (n) => Math.floor(Math.random() * n);
   G.pick = (arr) => arr[G.randInt(arr.length)];
@@ -160,5 +162,35 @@ window.G = window.G || {};
       prev = cur;
     }
     return prev[n];
+  };
+  G.drawBanner = (ctx, text, color = "#ffe066", y = H / 2) => {
+    ctx.font = "bold 26px Segoe UI, Roboto, sans-serif";
+    const w = ctx.measureText(text).width + 40;
+    ctx.fillStyle = "rgba(10, 8, 24, 0.75)";
+    ctx.beginPath();
+    ctx.roundRect(W / 2 - w / 2, y - 30, w, 46, 14);
+    ctx.fill();
+    ctx.fillStyle = color;
+    ctx.textAlign = "center";
+    ctx.fillText(text, W / 2, y + 2);
+  };
+
+  G.drawPopups = (ctx, popups) => {
+    ctx.textAlign = "center";
+    ctx.font = "bold 18px Segoe UI, Roboto, sans-serif";
+    for (const p of popups) {
+      ctx.globalAlpha = Math.min(1, p.life / 300);
+      ctx.fillStyle = p.color;
+      ctx.fillText(p.text, p.x, p.y);
+    }
+    ctx.globalAlpha = 1;
+  };
+
+  G.updatePopups = (popups, dt) => {
+    for (const p of popups) {
+      p.life -= dt;
+      p.y -= (30 * dt) / 1000;
+    }
+    return popups.filter((p) => p.life > 0);
   };
 })();

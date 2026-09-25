@@ -14,10 +14,10 @@
   }
 
   G.c2level7 = {
-    title: "Level 7 — Ruzie met de juf (10 jaar)",
+    title: "Level 7 — In de klas (10 jaar)",
     intro:
-      "Je krijgt <strong>ruzie</strong> met je juf. Je wordt steeds bozer...<br>" +
-      `Druk heel vaak op <strong>SPATIE</strong> (${TARGET} keer) om de stoel op te tillen en te gooien.`,
+      "Een gewone schooldag... of niet?<br>" +
+      "In dit level gebruik je <strong>SPATIE</strong>. Druk zo vaak als het spel vraagt.",
 
     drawBackground(ctx, t) {
       G.drawClassroom(ctx);

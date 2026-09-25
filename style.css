@@ -288,8 +288,9 @@ button:active {
   touch-action: manipulation;
 }
 
-#touchControls #actionBtn {
-  width: 180px;
+#touchControls #actionBtn,
+#touchControls #blockBtn {
+  width: 110px;
   font-size: 1rem;
 }
 

@@ -71,9 +71,9 @@
   G.c2level6 = G.makeFightLevel({
     title: "Level 6 — Het basketbalveld (9 jaar)",
     intro:
-      "Je bent aan het basketballen met vrienden. Opeens komt er een <strong>bendelid</strong> dat je bal wil. Je zegt nee... en hij wil vechten.<br>" +
-      "Loop met de <strong>pijltjes</strong> en sla met <strong>SPATIE</strong>. Licht zijn vuist <strong>geel</strong> op? Ga opzij!<br>" +
-      "Sla terug net na zijn uithaal. <strong>Verlies je</strong> het gevecht, dan ben je een hartje kwijt.",
+      "Een middagje basketballen met je vrienden.<br>" +
+      "<strong>Pijltjes</strong> = lopen, <strong>SPATIE</strong> = slaan, <strong>B</strong> ingedrukt houden = blokken.<br>" +
+      "Licht een vuist <strong>geel</strong> op? Dan komt er een klap aan.",
     bounds: { minX: 50, maxX: W - 50, minY: 250, maxY: H - 20 },
     labels: { player: "Jij", enemy: "Bendelid" },
     enemySpeed: 115,

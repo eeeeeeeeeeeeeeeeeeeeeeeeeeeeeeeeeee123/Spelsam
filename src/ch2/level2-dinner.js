@@ -100,8 +100,8 @@
   G.c2level2 = {
     title: "Level 2 — Aan tafel (2 jaar)",
     intro:
-      "Je eet thuis met je ouders. Kies wat je eet: <strong>klik op het eten</strong>, of kies met <strong>← →</strong> en eet met <strong>SPATIE</strong>.<br>" +
-      "Eet je <strong>broccoli</strong> en <strong>biefstuk</strong> op (elk 3 happen). Neem je eerst de <strong>chocola</strong>? Dan krijg je een billenkoek en ben je een hartje kwijt.",
+      "Etenstijd met je ouders!<br>" +
+      "<strong>Klik op het eten</strong>, of kies met <strong>← →</strong> en neem een hap met <strong>SPATIE</strong>. Luister goed naar je ouders.",
 
     drawBackground(ctx, t) {
       drawDining(ctx);

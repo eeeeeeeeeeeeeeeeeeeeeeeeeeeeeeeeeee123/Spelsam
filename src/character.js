@@ -372,21 +372,22 @@
     },
   });
 
-  // Two on-canvas choice buttons, selectable with ←/→ + SPACE or by tapping.
+  // On-canvas choice buttons, selectable with ←/→ + SPACE or by tapping.
   G.makeChoice = (options) => ({
     options,
     selected: 0,
     rects: [],
     onDirection(dx) {
-      if (dx) this.selected = dx < 0 ? 0 : this.options.length - 1;
+      if (dx) this.selected = G.clamp(this.selected + dx, 0, this.options.length - 1);
     },
     hit(x, y) {
       return this.rects.findIndex((r) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
     },
     draw(ctx, t) {
-      const w = 180;
-      const gap = 30;
-      const total = this.options.length * w + (this.options.length - 1) * gap;
+      const n = this.options.length;
+      const gap = n > 2 ? 14 : 30;
+      const w = Math.min(180, (G.W - 40 - gap * (n - 1)) / n);
+      const total = n * w + (n - 1) * gap;
       const y = G.H - 70;
       this.rects = this.options.map((_, i) => ({ x: G.W / 2 - total / 2 + i * (w + gap), y, w, h: 46 }));
       this.options.forEach((label, i) => {

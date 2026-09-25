@@ -22,10 +22,10 @@
   }
 
   G.c2level8 = {
-    title: "Level 8 — In de jeugdinrichting (10 jaar)",
+    title: "Level 8 — De kantine (10 jaar)",
     intro:
-      "Na de aanhouding zit je in een <strong>jeugdinrichting</strong>. Iemand probeert je <strong>op te stoken</strong>.<br>" +
-      "Je krijgt een keuze. Kies met <strong>← →</strong> en bevestig met <strong>SPATIE</strong>, of tik op een knop. Denk goed na...",
+      "Je zit in de kantine.<br>" +
+      "Soms moet je een keuze maken: kies met <strong>← →</strong> en bevestig met <strong>SPATIE</strong>, of tik op een knop. Denk goed na...",
 
     drawBackground(ctx, t) {
       drawCanteen(ctx);

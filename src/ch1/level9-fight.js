@@ -6,9 +6,8 @@
     title: "Level 9 — Het gevecht",
     intro:
       "Er kan er maar één als eerste geboren worden!<br>" +
-      "Zwem rond met de <strong>pijltjes</strong> en sla met <strong>SPATIE</strong>. " +
-      "Licht het zwaard van je tweeling <strong>geel</strong> op? Dan gaat die uithalen: <strong>zwem weg!</strong><br>" +
-      "Sla vooral terug net na een uithaal: dan staat je tweeling open. Anders blokt die vaak.",
+      "<strong>Pijltjes</strong> = zwemmen, <strong>SPATIE</strong> = slaan, <strong>B</strong> ingedrukt houden = blokken (kost uithoudingsvermogen).<br>" +
+      "Licht een zwaard <strong>geel</strong> op? Dan komt er een klap aan: zwem weg of blok. Sla terug net na een uithaal.",
     bounds: { minX: 50, maxX: W - 50, minY: 110, maxY: H - 60 },
     labels: { player: "Jij", enemy: "Tweeling" },
     enemySpeed: 105,

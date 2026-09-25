@@ -12,13 +12,13 @@
       },
     },
     {
-      name: "Hoofdstuk 2: Opgroeien (0–11 jaar)",
+      name: "Hoofdstuk 2: Opgroeien (0–12 jaar)",
       short: "H2",
-      levels: [G.c2level1, G.c2level2, G.c2level3, G.c2level4, G.c2level5, G.c2level6, G.c2level7, G.c2level8, G.c2level9],
+      levels: [G.c2level1, G.c2level2, G.c2level3, G.c2level4, G.c2level5, G.c2level6, G.c2level7, G.c2level8, G.c2level9, G.c2level10],
       win: {
-        title: "Je bent 11 jaar! 🎉",
-        emoji: "🤗",
-        text: "Je hebt geleerd dat weglopen en een knuffel sterker zijn dan vechten. Geweld heeft altijd gevolgen.",
+        title: "Je hebt je diploma! 🎓",
+        emoji: "🎓",
+        text: "Je bent 12 en klaar met de basisschool. Je hebt geleerd dat weglopen, een knuffel en hard werken sterker zijn dan vechten.",
       },
     },
   ];
@@ -217,7 +217,8 @@
   const DIR_VECTORS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 
   // Held directions, for levels with free movement instead of discrete steps.
-  G.held = { up: false, down: false, left: false, right: false };
+  G.held = { up: false, down: false, left: false, right: false, block: false };
+  const isBlockKey = (e) => e.key === "b" || e.key === "B";
 
   function direction(name, repeat) {
     G.held[name] = true;
@@ -240,12 +241,15 @@
     } else if (e.code === "Space") {
       e.preventDefault();
       if (!e.repeat) action();
+    } else if (isBlockKey(e)) {
+      G.held.block = true;
     }
   });
 
   window.addEventListener("keyup", (e) => {
     const name = keyName(e);
     if (name) G.held[name] = false;
+    else if (isBlockKey(e)) G.held.block = false;
   });
 
   window.addEventListener("blur", () => {
@@ -268,6 +272,15 @@
     e.preventDefault();
     action();
   });
+  $("blockBtn").addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    G.held.block = true;
+  });
+  for (const type of ["pointerup", "pointercancel", "pointerleave"]) {
+    $("blockBtn").addEventListener(type, () => {
+      G.held.block = false;
+    });
+  }
 
   function canvasPoint(e) {
     const r = canvas.getBoundingClientRect();
