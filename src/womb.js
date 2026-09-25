@@ -1,9 +1,6 @@
 (() => {
   const { W, H } = G;
 
-  G.PLAYER_LOOK = { skin: "#f7c9b2", shade: "#e8ab93", hair: "#7a4a2a" };
-  G.TWIN_LOOK = { skin: "#f1bfae", shade: "#dc9f8c", hair: "#2b2230" };
-
   G.drawWomb = (ctx, t) => {
     const g = ctx.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, W * 0.7);
     g.addColorStop(0, "#9c3b55");

@@ -1,50 +1,73 @@
 (() => {
-  const LEVELS = [G.level1, G.level2, G.level3, G.level4, G.level5, G.level6, G.level7, G.level8, G.level9];
   const MAX_HEARTS = 3;
+  const CHAPTERS = [
+    {
+      name: "Hoofdstuk 1: Van zaadcel tot baby",
+      short: "H1",
+      levels: [G.level1, G.level2, G.level3, G.level4, G.level5, G.level6, G.level7, G.level8, G.level9],
+      win: {
+        title: "Je bent geboren! 🎉",
+        emoji: "👶",
+        text: "Je hebt je tweeling verslagen en bent als eerste geboren. Je tweeling komt 5 minuten later: jij bent de oudste!",
+      },
+    },
+    {
+      name: "Hoofdstuk 2: Opgroeien (0–11 jaar)",
+      short: "H2",
+      levels: [G.c2level1, G.c2level2, G.c2level3, G.c2level4, G.c2level5, G.c2level6, G.c2level7, G.c2level8, G.c2level9],
+      win: {
+        title: "Je bent 11 jaar! 🎉",
+        emoji: "🤗",
+        text: "Je hebt geleerd dat weglopen en een knuffel sterker zijn dan vechten. Geweld heeft altijd gevolgen.",
+      },
+    },
+  ];
 
   const canvas = document.getElementById("gameCanvas");
   const ctx = canvas.getContext("2d");
   const confettiCanvas = document.getElementById("confettiCanvas");
   const confettiCtx = confettiCanvas.getContext("2d");
+  const previewCanvas = document.getElementById("previewCanvas");
+  const previewCtx = previewCanvas.getContext("2d");
 
-  const levelLabel = document.getElementById("levelLabel");
-  const heartsEl = document.getElementById("hearts");
-  const progressEl = document.getElementById("progress");
-
+  const $ = (id) => document.getElementById(id);
   const screens = {
-    start: document.getElementById("startScreen"),
-    intro: document.getElementById("introScreen"),
-    fail: document.getElementById("failScreen"),
-    gameover: document.getElementById("gameOverScreen"),
-    win: document.getElementById("winScreen"),
+    home: $("homeScreen"),
+    creator: $("creatorScreen"),
+    intro: $("introScreen"),
+    fail: $("failScreen"),
+    gameover: $("gameOverScreen"),
+    win: $("winScreen"),
   };
-  const introDone = document.getElementById("introDone");
-  const introTitle = document.getElementById("introTitle");
-  const introText = document.getElementById("introText");
-  const failReason = document.getElementById("failReason");
-  const failHearts = document.getElementById("failHearts");
-  const gameOverReason = document.getElementById("gameOverReason");
 
+  let chapter = 0;
   let levelIndex = 0;
   let hearts = MAX_HEARTS;
-  let mode = "start"; // start | intro | playing | failed | gameover | win
+  let mode = "home"; // home | creator | intro | playing | failed | gameover | win
   let lastTime = performance.now();
+  let draft = { ...G.appearance };
 
-  const level = () => LEVELS[levelIndex];
+  const levels = () => CHAPTERS[chapter].levels;
+  const level = () => levels()[levelIndex];
 
   function showScreen(name) {
     for (const [key, el] of Object.entries(screens)) el.classList.toggle("hidden", key !== name);
+  }
+
+  function showGameOver(title, reason, note) {
+    mode = "gameover";
+    $("gameOverTitle").textContent = title;
+    $("gameOverReason").textContent = reason;
+    $("gameOverNote").textContent = note;
+    showScreen("gameover");
   }
 
   const api = {
     complete() {
       if (mode !== "playing") return;
       level().stop?.();
-      if (levelIndex === LEVELS.length - 1) {
-        mode = "win";
-        showScreen("win");
-        startConfetti();
-      } else {
+      if (levelIndex === levels().length - 1) showWin();
+      else {
         levelIndex++;
         showIntro(true);
       }
@@ -54,24 +77,38 @@
       level().stop?.();
       hearts--;
       if (hearts <= 0) {
-        mode = "gameover";
-        gameOverReason.textContent = reason;
-        showScreen("gameover");
+        showGameOver("Game Over 💥", reason, "Je hartjes zijn op. Terug naar level 1 van dit hoofdstuk!");
       } else {
         mode = "failed";
-        failReason.textContent = reason;
-        failHearts.textContent = `Nog ${hearts} ${hearts === 1 ? "hartje" : "hartjes"} over.`;
+        $("failReason").textContent = reason;
+        $("failHearts").textContent = `Nog ${hearts} ${hearts === 1 ? "hartje" : "hartjes"} over.`;
         showScreen("fail");
       }
     },
+    restartChapter(reason) {
+      if (mode !== "playing") return;
+      level().stop?.();
+      showGameOver("Helemaal opnieuw", reason, "Het maakt niet uit hoeveel hartjes je had.");
+    },
   };
+
+  function showWin() {
+    mode = "win";
+    const w = CHAPTERS[chapter].win;
+    $("winTitle").textContent = w.title;
+    $("baby").textContent = w.emoji;
+    $("winText").textContent = w.text;
+    $("nextChapterBtn").classList.toggle("hidden", chapter === CHAPTERS.length - 1);
+    showScreen("win");
+    startConfetti();
+  }
 
   function showIntro(justCompleted) {
     mode = "intro";
-    introDone.classList.toggle("hidden", !justCompleted);
-    introDone.textContent = `Level ${levelIndex} gehaald!`;
-    introTitle.textContent = level().title;
-    introText.innerHTML = level().intro;
+    $("introDone").classList.toggle("hidden", !justCompleted);
+    $("introDone").textContent = `Level ${levelIndex} gehaald!`;
+    $("introTitle").textContent = level().title;
+    $("introText").innerHTML = level().intro;
     showScreen("intro");
   }
 
@@ -82,17 +119,74 @@
     lastTime = performance.now();
   }
 
-  function newGame() {
+  function startChapter(index) {
+    chapter = index;
     hearts = MAX_HEARTS;
     levelIndex = 0;
     stopConfetti();
     showIntro(false);
   }
 
+  function showHome() {
+    mode = "home";
+    stopConfetti();
+    showScreen("home");
+  }
+
+  // ---- Character creator ----
+  function buildCreator() {
+    const box = $("creatorOptions");
+    box.textContent = "";
+    const titles = { gender: "Ik ben een", skin: "Huidskleur", hair: "Haar", eyes: "Oogkleur" };
+    for (const [key, options] of Object.entries(G.APPEARANCE_OPTIONS)) {
+      const row = document.createElement("div");
+      row.className = "option-row";
+      const label = document.createElement("span");
+      label.className = "option-label";
+      label.textContent = titles[key];
+      row.appendChild(label);
+      for (const [value, text] of options) {
+        const b = document.createElement("button");
+        b.className = "option" + (draft[key] === value ? " selected" : "");
+        b.textContent = text;
+        b.addEventListener("click", (e) => {
+          e.currentTarget.blur();
+          draft[key] = value;
+          buildCreator();
+        });
+        row.appendChild(b);
+      }
+      box.appendChild(row);
+    }
+  }
+
+  function showCreator() {
+    mode = "creator";
+    draft = { ...G.appearance };
+    buildCreator();
+    showScreen("creator");
+  }
+
+  function drawPreview(t) {
+    previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+    const look = {
+      ...G.SKINS[draft.skin],
+      hair: draft.hair,
+      hairColor: G.HAIR_COLOR,
+      eyes: G.EYES[draft.eyes],
+      gender: draft.gender,
+      shirt: draft.gender === "meisje" ? "#e0679c" : "#4f8fdc",
+    };
+    G.drawKid(previewCtx, previewCanvas.width / 2 - 4, previewCanvas.height - 8, 1.6, look, { t });
+  }
+
+  // ---- Main loop ----
   function renderHud() {
-    levelLabel.textContent = mode === "start" ? "Race naar het Leven" : `Level ${levelIndex + 1} / ${LEVELS.length}`;
-    heartsEl.textContent = "❤️".repeat(hearts) + "🤍".repeat(MAX_HEARTS - hearts);
-    progressEl.textContent = mode === "playing" || mode === "failed" ? level().hud() : "";
+    const inGame = mode !== "home" && mode !== "creator";
+    $("hud").classList.toggle("hidden", !inGame);
+    $("levelLabel").textContent = inGame ? `${CHAPTERS[chapter].short} · Level ${levelIndex + 1} / ${levels().length}` : "Race naar het Leven";
+    $("hearts").textContent = inGame ? "❤️".repeat(Math.max(0, hearts)) + "🤍".repeat(MAX_HEARTS - Math.max(0, hearts)) : "";
+    $("progress").textContent = mode === "playing" || mode === "failed" ? level().hud() : "";
   }
 
   function frame(now) {
@@ -100,9 +194,10 @@
     lastTime = now;
     const t = now / 1000;
 
-    if (mode === "playing") level().update(dt);
+    if (mode === "playing") level().update(dt, t);
     if (mode === "playing" || mode === "failed" || mode === "gameover") level().render(ctx, t);
     else level().drawBackground(ctx, t);
+    if (mode === "creator") drawPreview(t);
 
     renderHud();
     requestAnimationFrame(frame);
@@ -169,24 +264,50 @@
       });
     }
   });
-  document.getElementById("actionBtn").addEventListener("pointerdown", (e) => {
+  $("actionBtn").addEventListener("pointerdown", (e) => {
     e.preventDefault();
     action();
   });
-  canvas.addEventListener("pointerdown", action);
+
+  function canvasPoint(e) {
+    const r = canvas.getBoundingClientRect();
+    return { x: ((e.clientX - r.left) * canvas.width) / r.width, y: ((e.clientY - r.top) * canvas.height) / r.height };
+  }
+
+  canvas.addEventListener("pointerdown", (e) => {
+    if (mode !== "playing") return;
+    const p = canvasPoint(e);
+    if (level().onPointer) level().onPointer(p.x, p.y);
+    else action();
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (mode !== "playing" || !level().onPointerMove) return;
+    const p = canvasPoint(e);
+    level().onPointerMove(p.x, p.y);
+  });
 
   // Buttons keep focus after a click, and Space would then re-trigger them.
   function onButton(id, fn) {
-    document.getElementById(id).addEventListener("click", (e) => {
+    $(id).addEventListener("click", (e) => {
       e.currentTarget.blur();
       fn();
     });
   }
-  onButton("startBtn", newGame);
+  onButton("chapter1Btn", () => startChapter(0));
+  onButton("chapter2Btn", () => startChapter(1));
+  onButton("appearanceBtn", showCreator);
+  onButton("creatorDoneBtn", () => {
+    G.setAppearance(draft);
+    showHome();
+  });
   onButton("introBtn", playLevel);
+  onButton("introMenuBtn", showHome);
   onButton("retryBtn", playLevel);
-  onButton("restartBtn", newGame);
-  onButton("playAgainBtn", newGame);
+  onButton("failMenuBtn", showHome);
+  onButton("restartBtn", () => startChapter(chapter));
+  onButton("gameOverMenuBtn", showHome);
+  onButton("nextChapterBtn", () => startChapter(chapter + 1));
+  onButton("winMenuBtn", showHome);
 
   // ---- Confetti ----
   const confettiColors = ["#ff8fb1", "#7fd1ff", "#ffd873", "#a0ffb4", "#c9a0ff"];
@@ -240,6 +361,7 @@
     requestAnimationFrame(confettiLoop);
   }
 
-  showScreen("start");
+  if (G.hasSavedAppearance()) showHome();
+  else showCreator();
   requestAnimationFrame(frame);
 })();

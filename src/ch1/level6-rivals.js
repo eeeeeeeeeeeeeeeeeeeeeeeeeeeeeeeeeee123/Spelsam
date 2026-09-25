@@ -14,24 +14,6 @@
     G.drawGrid(ctx, 0.035);
   }
 
-  // Cartoon pistol pointing right in local coordinates.
-  function drawPistol(ctx, x, y, angle, scale) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(angle);
-    if (Math.cos(angle) < -0.01) ctx.scale(1, -1);
-    ctx.scale(scale, scale);
-    ctx.fillStyle = "#5c6470";
-    ctx.fillRect(-8, -6, 20, 7);
-    ctx.fillStyle = "#3b414a";
-    ctx.fillRect(-8, 0, 7, 10);
-    ctx.fillStyle = "#8e98a6";
-    ctx.fillRect(-6, -5, 16, 2);
-    ctx.fillStyle = "#ff8fb1";
-    ctx.fillRect(10, -6, 3, 3);
-    ctx.restore();
-  }
-
   function addRival(L) {
     const head = L.body[0];
     const pos = L.spawnFree((p) => Math.abs(p.x - head.x) + Math.abs(p.y - head.y) < 4);
@@ -142,7 +124,7 @@
         ctx.beginPath();
         ctx.arc(c.x, c.y, CELL * 0.7, 0, Math.PI * 2);
         ctx.fill();
-        drawPistol(ctx, c.x, c.y + Math.sin(t * 3) * 2, 0, 1.1);
+        G.drawPistol(ctx, c.x, c.y + Math.sin(t * 3) * 2, 0, 1.1);
       }
       for (const r of L.rivals) {
         const c = G.cellCenter(r);
@@ -171,7 +153,7 @@
         const c = G.cellCenter(L.body[0]);
         const angle = Math.atan2(L.dir.y, L.dir.x);
         const r = L.headRadius();
-        drawPistol(ctx, c.x + Math.cos(angle) * r * 0.9, c.y + Math.sin(angle) * r * 0.9, angle, 0.8);
+        G.drawPistol(ctx, c.x + Math.cos(angle) * r * 0.9, c.y + Math.sin(angle) * r * 0.9, angle, 0.8);
       }
       ctx.font = "bold 14px Segoe UI, Roboto, sans-serif";
       ctx.textAlign = "left";

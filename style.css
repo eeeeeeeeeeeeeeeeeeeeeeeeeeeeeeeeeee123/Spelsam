@@ -298,3 +298,86 @@ button:active {
     display: flex;
   }
 }
+
+.overlay {
+  overflow-y: auto;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: min(340px, 100%);
+}
+
+.menu button {
+  width: 100%;
+}
+
+button.secondary {
+  background: #2c3670;
+  color: var(--text);
+}
+
+button.link {
+  margin-top: 0;
+  padding: 6px 14px;
+  background: none;
+  color: var(--text);
+  opacity: 0.7;
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+.creator {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+#previewCanvas {
+  position: static;
+  width: 120px;
+  height: 170px;
+  border-radius: 12px;
+  background: radial-gradient(circle, #2c3670, #141a33);
+}
+
+#creatorOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.option-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.option-label {
+  width: 86px;
+  text-align: left;
+  font-size: 0.85rem;
+  opacity: 0.75;
+}
+
+button.option {
+  margin: 0;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  background: #2c3670;
+  color: var(--text);
+}
+
+button.option.selected {
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  color: #101223;
+}
+
+.hidden {
+  display: none !important;
+}

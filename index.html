@@ -32,11 +32,23 @@
         <div id="wordFeedback"></div>
       </div>
 
-      <div id="startScreen" class="overlay">
-        <h2>Zaadcel op Missie 🏊</h2>
-        <p>Zwem de hele route naar de eicel, groei op in de buik en word als eerste geboren. <strong>9 levels</strong>.</p>
-        <p>Je hebt <strong>3 hartjes</strong>. Elke fout kost er één en dan probeer je het level opnieuw. Alle hartjes op? Dan begin je weer bij level 1.</p>
-        <button id="startBtn">Start het Avontuur</button>
+      <div id="homeScreen" class="overlay hidden">
+        <h2>Race naar het Leven</h2>
+        <p>Van zaadcel tot kind: elke keuze heeft gevolgen. Je hebt <strong>3 hartjes</strong> per hoofdstuk.</p>
+        <div class="menu">
+          <button id="chapter1Btn">Hoofdstuk 1: Van zaadcel tot baby</button>
+          <button id="chapter2Btn">Hoofdstuk 2: Opgroeien (0–11 jaar)</button>
+          <button id="appearanceBtn" class="secondary">Uiterlijk aanpassen</button>
+        </div>
+      </div>
+
+      <div id="creatorScreen" class="overlay hidden">
+        <h2>Hoe zie jij eruit?</h2>
+        <div class="creator">
+          <canvas id="previewCanvas" width="120" height="170"></canvas>
+          <div id="creatorOptions"></div>
+        </div>
+        <button id="creatorDoneBtn">Klaar</button>
       </div>
 
       <div id="introScreen" class="overlay hidden">
@@ -44,6 +56,7 @@
         <h2 id="introTitle"></h2>
         <p id="introText"></p>
         <button id="introBtn">Start level</button>
+        <button id="introMenuBtn" class="link">Hoofdmenu</button>
       </div>
 
       <div id="failScreen" class="overlay hidden">
@@ -51,22 +64,25 @@
         <p id="failReason"></p>
         <p id="failHearts"></p>
         <button id="retryBtn">Probeer opnieuw</button>
+        <button id="failMenuBtn" class="link">Hoofdmenu</button>
       </div>
 
       <div id="gameOverScreen" class="overlay hidden">
-        <h2>Game Over 💥</h2>
+        <h2 id="gameOverTitle">Game Over 💥</h2>
         <p id="gameOverReason"></p>
-        <p>Je hartjes zijn op. Terug naar level 1!</p>
+        <p id="gameOverNote"></p>
         <button id="restartBtn">Opnieuw beginnen</button>
+        <button id="gameOverMenuBtn" class="link">Hoofdmenu</button>
       </div>
 
       <div id="winScreen" class="overlay hidden">
-        <h2>Je bent geboren! 🎉</h2>
+        <h2 id="winTitle"></h2>
         <div id="babyStage">
-          <div id="baby">👶</div>
+          <div id="baby"></div>
         </div>
-        <p>Je hebt je tweeling verslagen en bent als eerste geboren. Je tweeling komt 5 minuten later: jij bent de oudste!</p>
-        <button id="playAgainBtn">Nog een keer</button>
+        <p id="winText"></p>
+        <button id="nextChapterBtn">Door naar hoofdstuk 2</button>
+        <button id="winMenuBtn" class="link">Hoofdmenu</button>
       </div>
     </div>
 
@@ -82,17 +98,29 @@
   </div>
 
   <script src="src/shared.js"></script>
+  <script src="src/character.js"></script>
   <script src="src/snake.js"></script>
-  <script src="src/level1-vagina.js"></script>
-  <script src="src/level2-cervix.js"></script>
-  <script src="src/level3-uterus.js"></script>
-  <script src="src/level4-words.js"></script>
-  <script src="src/level5-tube.js"></script>
-  <script src="src/level6-rivals.js"></script>
-  <script src="src/level7-egg.js"></script>
+  <script src="src/fight.js"></script>
   <script src="src/womb.js"></script>
-  <script src="src/level8-twin.js"></script>
-  <script src="src/level9-fight.js"></script>
+  <script src="src/ch1/level1-vagina.js"></script>
+  <script src="src/ch1/level2-cervix.js"></script>
+  <script src="src/ch1/level3-uterus.js"></script>
+  <script src="src/ch1/level4-words.js"></script>
+  <script src="src/ch1/level5-tube.js"></script>
+  <script src="src/ch1/level6-rivals.js"></script>
+  <script src="src/ch1/level7-egg.js"></script>
+  <script src="src/ch1/level8-twin.js"></script>
+  <script src="src/ch1/level9-fight.js"></script>
+  <script src="src/ch2/scenery.js"></script>
+  <script src="src/ch2/level1-arena.js"></script>
+  <script src="src/ch2/level2-dinner.js"></script>
+  <script src="src/ch2/level3-walk.js"></script>
+  <script src="src/ch2/level4-school.js"></script>
+  <script src="src/ch2/level5-football.js"></script>
+  <script src="src/ch2/level6-basketball.js"></script>
+  <script src="src/ch2/level7-chair.js"></script>
+  <script src="src/ch2/level8-provoke.js"></script>
+  <script src="src/ch2/level9-therapy.js"></script>
   <script src="src/main.js"></script>
 </body>
 </html>
