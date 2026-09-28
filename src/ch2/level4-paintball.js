@@ -8,9 +8,12 @@
   const SHOT_COOLDOWN = 350;
   const BALL_SPEED = 480;
   const BALL_RANGE = 520;
-  const BULLY_SPEED = 110;
-  const BULLY_SHOT_GAP = 260;
-  const BULLY_JITTER = 0.13;
+  const BULLY_SPEED = 145;
+  const BULLY_SHOT_GAP = 190;
+  const BULLY_JITTER = 0.06;
+  const DODGE_RANGE = 110;
+  const DODGE_CHANCE = 0.55;
+  const DODGE_MS = 260;
   const PLAYER_PAINT = "#2f8cff";
   const BULLY_PAINT = "#ff7a1a";
   const BUNKERS = [
@@ -152,8 +155,7 @@
   G.c2level4 = {
     title: "Level 4 — De uitdaging (6 jaar)",
     intro:
-      "Loop met de <strong>pijltjes / WASD</strong>. Mik met de <strong>muis</strong> en schiet door te <strong>klikken</strong>, " +
-      "of druk op <strong>SPATIE</strong> om recht op je tegenstander te schieten.<br>" +
+      "Loop met de <strong>pijltjes / WASD</strong>. Mik met de <strong>muis</strong> en schiet door te <strong>klikken</strong> (op mobiel: tik waar je heen schiet).<br>" +
       `Gebruik de bunkers als dekking. Wie het eerst <strong>${WINS_NEEDED} rondes</strong> wint, wint.`,
 
     drawBackground(ctx) {
@@ -175,7 +177,7 @@
 
     resetRound() {
       this.player = { x: 50, y: 225, facing: 1, moving: false, flash: 0 };
-      this.bully = { x: W - 50, y: 225, state: "move", timer: 0, target: null, shots: 0, flash: 0 };
+      this.bully = { x: W - 50, y: 225, state: "move", timer: 0, target: null, shots: 0, flash: 0, dodge: null };
       this.pickCover();
       this.balls = [];
       this.cooldown = 0;
@@ -205,7 +207,7 @@
     },
 
     onAction() {
-      this.playerShoot(this.bully.x, this.bully.y - 22);
+      if (this.phase === "round") this.popup("Mik met de muis!", this.player.x, this.player.y - 60, "#ffe066");
     },
 
     onPointer(x, y) {
@@ -228,6 +230,25 @@
       const b = this.bully;
       const p = this.player;
       b.timer -= dt;
+      if (b.dodge) {
+        b.dodge.left -= dt;
+        b.x += b.dodge.vx * s;
+        b.y += b.dodge.vy * s;
+        pushOut(b);
+        if (b.dodge.left <= 0) b.dodge = null;
+        return;
+      }
+      const incoming = this.balls.find((ball) => ball.owner === "player" && !ball.seen && Math.hypot(ball.x - b.x, ball.y - (b.y - 22)) < DODGE_RANGE);
+      if (incoming) {
+        incoming.seen = true;
+        if (Math.random() < DODGE_CHANCE) {
+          const len = Math.hypot(incoming.vx, incoming.vy) || 1;
+          const side = Math.random() < 0.5 ? 1 : -1;
+          const speed = BULLY_SPEED * 1.6;
+          b.dodge = { left: DODGE_MS, vx: (-incoming.vy / len) * side * speed, vy: (incoming.vx / len) * side * speed };
+          return;
+        }
+      }
       const moveTo = (target) => {
         const d = dist(b, target);
         if (d < 4) return true;
@@ -239,7 +260,7 @@
       if (b.state === "move") {
         if (moveTo(b.target)) {
           b.state = "hide";
-          b.timer = 700 + Math.random() * 900;
+          b.timer = 400 + Math.random() * 600;
         }
       } else if (b.state === "hide") {
         if (b.timer <= 0) {
@@ -254,7 +275,7 @@
       } else if (b.state === "peek") {
         if (moveTo(b.peek)) {
           b.state = "fire";
-          b.shots = 1 + G.randInt(2);
+          b.shots = 2 + G.randInt(2);
           b.timer = 150;
         }
       } else if (b.state === "fire") {
@@ -275,7 +296,7 @@
       } else if (b.state === "back") {
         if (moveTo(b.target)) {
           b.state = "hide";
-          b.timer = 900 + Math.random() * 900;
+          b.timer = 500 + Math.random() * 700;
         }
       }
     },

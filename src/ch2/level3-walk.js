@@ -2,30 +2,35 @@
   const { CELL, COLS, ROWS, W } = G;
   const START = { x: 1, y: 13 };
   const GOAL = { x: 16, y: 1 };
-  const LEGOS = 28;
-  const CAR_ROW = 7;
-  const CAT_COL = 9;
-  const CAR_SPEED = 3;
-  const CAT_SPEED = 2;
+  const LEGOS = 26;
+  // Moving hazards: cars drive along rows, pets walk along columns.
+  const MOVERS = [
+    { kind: "car", lane: 4, speed: 3.2, color: "#e0453a" },
+    { kind: "car", lane: 8, speed: 4.4, color: "#3f7fe0" },
+    { kind: "car", lane: 11, speed: 2.6, color: "#3fb65a" },
+    { kind: "cat", lane: 6, speed: 2.3 },
+    { kind: "dog", lane: 12, speed: 3.1 },
+  ];
+  const isLane = (p) => MOVERS.some((m) => (m.kind === "car" ? p.y === m.lane : p.x === m.lane));
   const LEGO_COLORS = ["#e04545", "#3f7fe0", "#f0c030", "#3fb65a"];
 
   const key = (p) => `${p.x},${p.y}`;
 
-  function hasPath(blocked) {
-    const seen = new Set([key(START)]);
-    const queue = [START];
+  // Steps from every free cell to the goal (BFS outward from the goal).
+  function distances(blocked) {
+    const dist = new Map([[key(GOAL), 0]]);
+    const queue = [GOAL];
     while (queue.length) {
       const p = queue.shift();
-      if (p.x === GOAL.x && p.y === GOAL.y) return true;
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
         const n = { x: p.x + dx, y: p.y + dy };
         if (n.x < 0 || n.x >= COLS || n.y < 0 || n.y >= ROWS) continue;
-        if (blocked.has(key(n)) || seen.has(key(n))) continue;
-        seen.add(key(n));
+        if (blocked.has(key(n)) || dist.has(key(n))) continue;
+        dist.set(key(n), dist.get(key(p)) + 1);
         queue.push(n);
       }
     }
-    return false;
+    return dist;
   }
 
   function makeLegos() {
@@ -35,10 +40,10 @@
         const p = { x: G.randInt(COLS), y: G.randInt(ROWS) };
         const nearStart = Math.abs(p.x - START.x) + Math.abs(p.y - START.y) < 3;
         const nearGoal = Math.abs(p.x - GOAL.x) + Math.abs(p.y - GOAL.y) < 3;
-        if (nearStart || nearGoal || p.y === CAR_ROW || p.x === CAT_COL) continue;
+        if (nearStart || nearGoal || isLane(p)) continue;
         legos.set(key(p), G.pick(LEGO_COLORS));
       }
-      if (hasPath(legos)) return legos;
+      if (distances(legos).has(key(START))) return legos;
     }
   }
 
@@ -66,10 +71,10 @@
     }
   }
 
-  function drawCar(ctx, x) {
+  function drawCar(ctx, x, row, color) {
     const px = x * CELL;
-    const py = CAR_ROW * CELL;
-    ctx.fillStyle = "#e0453a";
+    const py = row * CELL;
+    ctx.fillStyle = color;
     ctx.fillRect(px + 2, py + 10, CELL - 4, 12);
     ctx.fillRect(px + 7, py + 4, CELL - 14, 8);
     ctx.fillStyle = "#222";
@@ -79,10 +84,11 @@
     ctx.fill();
   }
 
-  function drawCat(ctx, y, t) {
-    const cx = CAT_COL * CELL + CELL / 2;
+  function drawPet(ctx, col, y, t, dog) {
+    const cx = col * CELL + CELL / 2;
     const cy = y * CELL + CELL / 2 + 3;
-    ctx.fillStyle = "#6b6b6b";
+    const fur = dog ? "#a0673a" : "#6b6b6b";
+    ctx.fillStyle = fur;
     ctx.beginPath();
     ctx.ellipse(cx, cy + 3, 11, 8, 0, 0, Math.PI * 2);
     ctx.fill();
@@ -90,14 +96,19 @@
     ctx.arc(cx, cy - 7, 7, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.moveTo(cx - 6, cy - 11);
-    ctx.lineTo(cx - 4, cy - 18);
-    ctx.lineTo(cx - 1, cy - 12);
-    ctx.moveTo(cx + 6, cy - 11);
-    ctx.lineTo(cx + 4, cy - 18);
-    ctx.lineTo(cx + 1, cy - 12);
+    if (dog) {
+      ctx.ellipse(cx - 7, cy - 6, 3, 6, 0.3, 0, Math.PI * 2);
+      ctx.ellipse(cx + 7, cy - 6, 3, 6, -0.3, 0, Math.PI * 2);
+    } else {
+      ctx.moveTo(cx - 6, cy - 11);
+      ctx.lineTo(cx - 4, cy - 18);
+      ctx.lineTo(cx - 1, cy - 12);
+      ctx.moveTo(cx + 6, cy - 11);
+      ctx.lineTo(cx + 4, cy - 18);
+      ctx.lineTo(cx + 1, cy - 12);
+    }
     ctx.fill();
-    ctx.strokeStyle = "#6b6b6b";
+    ctx.strokeStyle = fur;
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(cx + 10, cy + 4);
@@ -108,8 +119,9 @@
   G.c2level3 = {
     title: "Level 3 — Leren lopen (3 jaar)",
     intro:
-      "Je leert <strong>lopen</strong>! Loop naar je ouder in de hoek. Elke druk op <strong>W A S D</strong> (of de pijltjes) is één stapje.<br>" +
-      "Stap niet op <strong>lego</strong> en kijk uit voor de <strong>speelgoedauto</strong> en de <strong>kat</strong>. Vallen kost een hartje.",
+      "Loop naar je ouder in de hoek. Elke druk op <strong>W A S D</strong> (of de pijltjes) is één stapje.<br>" +
+      "Neem de <strong>snelste route</strong>: elke stap moet je dichterbij brengen. Wachten mag.<br>" +
+      "Stap niet op <strong>lego</strong> en kijk uit voor alles wat beweegt.",
 
     drawBackground(ctx, t) {
       drawCarpet(ctx);
@@ -124,8 +136,10 @@
       this.facing = 1;
       this.walk = 0;
       this.legos = makeLegos();
-      this.car = { x: 0, dir: 1 };
-      this.cat = { y: 2, dir: 1 };
+      this.dist = distances(this.legos);
+      this.budget = this.dist.get(key(START));
+      this.steps = 0;
+      this.movers = MOVERS.map((m) => ({ ...m, pos: Math.random() * (m.kind === "car" ? COLS - 1 : ROWS - 1), dir: Math.random() < 0.5 ? 1 : -1 }));
       this.over = false;
     },
 
@@ -134,10 +148,16 @@
       const nx = G.clamp(this.player.x + dx, 0, COLS - 1);
       const ny = G.clamp(this.player.y + dy, 0, ROWS - 1);
       if (dx) this.facing = dx;
+      if (nx === this.player.x && ny === this.player.y) return;
       this.player = { x: nx, y: ny };
+      this.steps++;
       this.walk = 250;
       if (this.legos.has(key(this.player))) {
         this.fall("Au! Je stapte op een lego en viel.");
+        return;
+      }
+      if (this.steps + this.dist.get(key(this.player)) > this.budget) {
+        this.fall("Omweg! Dat was niet de snelste route.");
         return;
       }
       this.checkMovers();
@@ -154,22 +174,26 @@
 
     checkMovers() {
       const p = this.player;
-      if (p.y === CAR_ROW && Math.abs(this.car.x + 0.5 - (p.x + 0.5)) < 0.8) this.fall("De speelgoedauto reed je omver!");
-      else if (p.x === CAT_COL && Math.abs(this.cat.y - p.y) < 0.8) this.fall("Je struikelde over de kat!");
+      const reasons = { car: "Een speelgoedauto reed je omver!", cat: "Je struikelde over de kat!", dog: "De hond liep je omver!" };
+      for (const m of this.movers) {
+        const hit = m.kind === "car" ? p.y === m.lane && Math.abs(m.pos - p.x) < 0.8 : p.x === m.lane && Math.abs(m.pos - p.y) < 0.8;
+        if (hit) {
+          this.fall(reasons[m.kind]);
+          return;
+        }
+      }
     },
 
     update(dt) {
       const s = dt / 1000;
       this.walk = Math.max(0, this.walk - dt);
-      this.car.x += this.car.dir * CAR_SPEED * s;
-      if (this.car.x <= 0 || this.car.x >= COLS - 1) {
-        this.car.x = G.clamp(this.car.x, 0, COLS - 1);
-        this.car.dir *= -1;
-      }
-      this.cat.y += this.cat.dir * CAT_SPEED * s;
-      if (this.cat.y <= 0 || this.cat.y >= ROWS - 1) {
-        this.cat.y = G.clamp(this.cat.y, 0, ROWS - 1);
-        this.cat.dir *= -1;
+      for (const m of this.movers) {
+        const max = (m.kind === "car" ? COLS : ROWS) - 1;
+        m.pos += m.dir * m.speed * s;
+        if (m.pos <= 0 || m.pos >= max) {
+          m.pos = G.clamp(m.pos, 0, max);
+          m.dir *= -1;
+        }
       }
       if (!this.over) this.checkMovers();
     },
@@ -177,14 +201,18 @@
     render(ctx, t) {
       drawCarpet(ctx);
       ctx.fillStyle = "rgba(90, 60, 30, 0.15)";
-      ctx.fillRect(0, CAR_ROW * CELL, W, CELL);
-      ctx.fillRect(CAT_COL * CELL, 0, CELL, ROWS * CELL);
+      for (const m of this.movers) {
+        if (m.kind === "car") ctx.fillRect(0, m.lane * CELL, W, CELL);
+        else ctx.fillRect(m.lane * CELL, 0, CELL, ROWS * CELL);
+      }
       for (const [k, color] of this.legos) {
         const [x, y] = k.split(",").map(Number);
         drawLego(ctx, x, y, color);
       }
-      drawCar(ctx, this.car.x);
-      drawCat(ctx, this.cat.y, t);
+      for (const m of this.movers) {
+        if (m.kind === "car") drawCar(ctx, m.pos, m.lane, m.color);
+        else drawPet(ctx, m.lane, m.pos, t, m.kind === "dog");
+      }
 
       const { mom } = G.parentLooks();
       G.drawKid(ctx, GOAL.x * CELL + CELL / 2, GOAL.y * CELL + CELL, 0.55, mom, { adult: true, facing: -1, armAngle: -0.6, t });
@@ -200,8 +228,7 @@
     },
 
     hud() {
-      const d = Math.abs(this.player.x - GOAL.x) + Math.abs(this.player.y - GOAL.y);
-      return `Nog ${d} stapjes naar je ouder`;
+      return `Stapjes: ${this.steps} / ${this.budget}`;
     },
   };
 })();

@@ -7,7 +7,13 @@
   const SLIDE_SPEED = 340;
   const SLIDE_COOLDOWN = 700;
   const TACKLE_DIST = 30;
-  const CARRIER_SPEED = 90;
+  const CARRIER_SPEED = 125;
+  const MAX_GOALS = 1;
+  const FEINT_RANGE = 75;
+  const FEINT_CHANCE = 0.6;
+  const FEINT_MS = 300;
+  const FEINT_SPEED = 260;
+  const FEINT_COOLDOWN = 1400;
   const RESPAWN_MS = 900;
   const MAX_YELLOW = 2;
   const GOAL = { x: 22, top: 170, bottom: 280 };
@@ -58,7 +64,8 @@
     intro:
       "Je eerste voetbalwedstrijd! Maak minstens <strong>7 tackles</strong> voordat de wedstrijd voorbij is.<br>" +
       "Loop met de <strong>pijltjes / WASD</strong> en maak een sliding met <strong>SPATIE</strong> in de richting waarin je loopt.<br>" +
-      "Tackle <strong>van voren of opzij</strong>. Van achteren is een overtreding: <strong>2 gele kaarten</strong> = rood = een hartje kwijt.",
+      "Tackle <strong>van voren of opzij</strong>; van achteren is een gele kaart. Let op <strong>schijnbewegingen</strong>!<br>" +
+      "<strong>2 gele kaarten</strong> of <strong>2 tegengoals</strong> kost een hartje.",
 
     drawBackground(ctx) {
       drawField(ctx);
@@ -83,7 +90,7 @@
     spawnCarrier() {
       const y = 110 + Math.random() * 230;
       this.lookIndex = (this.lookIndex + 1) % this.oppLooks.length;
-      this.carrier = { x: W - 50, y, baseY: y, phase: Math.random() * 6, vx: -1, vy: 0, down: 0, look: this.oppLooks[this.lookIndex] };
+      this.carrier = { x: W - 50, y, baseY: y, phase: Math.random() * 6, vx: -1, vy: 0, down: 0, look: this.oppLooks[this.lookIndex], feint: null, feintCooldown: 0 };
     },
 
     popup(text, x, y, color) {
@@ -150,20 +157,43 @@
         return;
       }
 
-      c.phase += s * 2;
-      const tx = GOAL.x;
-      const ty = (GOAL.top + GOAL.bottom) / 2 + Math.sin(c.phase) * 60;
-      const d = Math.hypot(tx - c.x, ty - c.y) || 1;
-      c.vx = (tx - c.x) / d;
-      c.vy = (ty - c.y) / d;
-      c.x += c.vx * CARRIER_SPEED * s;
-      c.y += c.vy * CARRIER_SPEED * s;
+      c.feintCooldown = Math.max(0, c.feintCooldown - dt);
+      if (c.feint) {
+        c.feint.left -= dt;
+        c.x += c.feint.vx * s;
+        c.y = G.clamp(c.y + c.feint.vy * s, FIELD.minY, FIELD.maxY);
+        if (c.feint.left <= 0) c.feint = null;
+      } else {
+        c.phase += s * 2;
+        const tx = GOAL.x;
+        const ty = (GOAL.top + GOAL.bottom) / 2 + Math.sin(c.phase) * 60;
+        const d = Math.hypot(tx - c.x, ty - c.y) || 1;
+        c.vx = (tx - c.x) / d;
+        c.vy = (ty - c.y) / d;
+        c.x += c.vx * CARRIER_SPEED * s;
+        c.y += c.vy * CARRIER_SPEED * s;
+
+        // Feint: a sudden cut sideways when a defender closes in from the front.
+        const inFront = (p.x - c.x) * c.vx + (p.y - c.y) * c.vy > 0;
+        if (c.feintCooldown <= 0 && inFront && Math.hypot(p.x - c.x, p.y - c.y) < FEINT_RANGE) {
+          c.feintCooldown = FEINT_COOLDOWN;
+          if (Math.random() < FEINT_CHANCE) {
+            const side = p.y > c.y ? -1 : 1;
+            c.feint = { left: FEINT_MS, vx: c.vx * CARRIER_SPEED * 0.5, vy: side * FEINT_SPEED };
+            this.popup("Schijnbeweging!", c.x, c.y - 70, "#ffb3dc");
+          }
+        }
+      }
 
       if (c.x < GOAL.x + 14) {
         this.goals++;
-        this.popup("Tegengoal!", 90, 150, "#ff6b6b");
         this.carrier = null;
         this.respawn = RESPAWN_MS;
+        if (this.goals > MAX_GOALS) {
+          this.finish(false, "Twee tegengoals! De trainer haalt je naar de kant.");
+          return;
+        }
+        this.popup("Tegengoal! Nog één en je ligt eruit.", W / 2, 150, "#ff6b6b");
         return;
       }
 

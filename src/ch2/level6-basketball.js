@@ -76,8 +76,9 @@
       "Licht een vuist <strong>geel</strong> op? Dan komt er een klap aan.",
     bounds: { minX: 50, maxX: W - 50, minY: 250, maxY: H - 20 },
     labels: { player: "Jij", enemy: "Bendelid" },
-    enemySpeed: 115,
-    winText: "Gewonnen. Maar was die bal het echt waard?",
+    enemySpeed: 145,
+    stats: { windupMs: 380, recoverMs: 600, enemyDamage: 30, parryChance: 0.75 },
+    winText: "K.O.! Jij wint.",
     loseReason: "Het bendelid was sterker. Je verloor het gevecht.",
     script: [
       { who: "enemy", text: "Hé jij. Geef me die bal.", ms: 2000 },

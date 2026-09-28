@@ -26,6 +26,13 @@
   const GUARD_BREAK_MS = 700;
   const HIT_STUN_MS = 300;
 
+  const DEFAULT_STATS = {
+    windupMs: WINDUP_MS,
+    recoverMs: RECOVER_MS,
+    enemyDamage: ENEMY_DAMAGE,
+    parryChance: PARRY_CHANCE,
+  };
+
   G.FIGHT_ANGLES = { idle: -0.9, raised: -1.8, struck: 0.6, guard: -1.35 };
 
   function drawBar(ctx, x, y, w, h, frac, color, alignRight) {
@@ -77,10 +84,11 @@
   // Telegraphed melee duel: the enemy approaches, winds up (glows) and
   // strikes; the player dodges or blocks (B) and punishes the recovery.
   // cfg: title, intro, bounds, labels, enemySpeed, script, winText,
-  // loseReason, drawBackground(ctx,t), drawIdle(ctx,t),
-  // drawActor(ctx, who, pos, facing, stance, t).
+  // loseReason, stats (overrides DEFAULT_STATS), drawBackground(ctx,t),
+  // drawIdle(ctx,t), drawActor(ctx, who, pos, facing, stance, t).
   G.makeFightLevel = (cfg) => {
     const bounds = cfg.bounds;
+    const stats = { ...DEFAULT_STATS, ...cfg.stats };
     const clampPos = (p) => {
       p.x = G.clamp(p.x, bounds.minX, bounds.maxX);
       p.y = G.clamp(p.y, bounds.minY, bounds.maxY);
@@ -149,7 +157,7 @@
         const e = this.enemy;
         const mid = { x: (p.x + e.x) / 2, y: (p.y + e.y) / 2 - 50 };
         const open = e.state === "recover" || e.state === "stagger";
-        if (!open && Math.random() < PARRY_CHANCE) {
+        if (!open && Math.random() < stats.parryChance) {
           this.popup("Geblokt!", e.x, e.y - 90, "#9fd3ff");
           this.impact(mid.x, mid.y, false);
           this.jolt(120, 3, 0);
@@ -190,10 +198,10 @@
             this.popup("Geblokt!", p.x, p.y - 90, "#9fd3ff");
           }
         } else {
-          p.hp -= ENEMY_DAMAGE;
+          p.hp -= stats.enemyDamage;
           p.flash = 400;
           p.stun = HIT_STUN_MS;
-          this.popup(`-${ENEMY_DAMAGE}`, p.x, p.y - 90, "#ff6b6b");
+          this.popup(`-${stats.enemyDamage}`, p.x, p.y - 90, "#ff6b6b");
           this.impact(mid.x, mid.y, true);
           this.jolt(320, 11, HITSTOP_MS + 30);
           push(p, e, KNOCKBACK);
@@ -251,7 +259,7 @@
           case "approach":
             if (dist < TRIGGER) {
               e.state = "windup";
-              e.timer = WINDUP_MS;
+              e.timer = stats.windupMs;
               break;
             }
             e.x += ((p.x - e.x) / dist) * cfg.enemySpeed * s;
@@ -268,13 +276,13 @@
           case "swing":
             if (e.timer <= 0) {
               e.state = "recover";
-              e.timer = RECOVER_MS;
+              e.timer = stats.recoverMs;
             }
             break;
           case "stagger":
             if (e.timer <= 0) {
               e.state = "recover";
-              e.timer = RECOVER_MS / 2;
+              e.timer = stats.recoverMs / 2;
             }
             break;
           case "recover":
