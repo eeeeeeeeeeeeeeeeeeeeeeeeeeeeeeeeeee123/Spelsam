@@ -85,7 +85,9 @@
   // strikes; the player dodges or blocks (B) and punishes the recovery.
   // cfg: title, intro, bounds, labels, enemySpeed, script, winText,
   // loseReason, stats (overrides DEFAULT_STATS), drawBackground(ctx,t),
-  // drawIdle(ctx,t), drawActor(ctx, who, pos, facing, stance, t).
+  // drawIdle(ctx,t), drawActor(ctx, who, pos, facing, stance, t),
+  // makePrelude(api): optional mini-game played before the script, an
+  // object with update(dt), render(ctx,t), done() and hud().
   G.makeFightLevel = (cfg) => {
     const bounds = cfg.bounds;
     const stats = { ...DEFAULT_STATS, ...cfg.stats };
@@ -121,6 +123,11 @@
         this.shake = 0;
         this.shakeMag = 0;
         this.script = G.makeScript(cfg.script || []);
+        this.prelude = cfg.makePrelude ? cfg.makePrelude(api) : null;
+      },
+
+      inPrelude() {
+        return this.prelude && !this.prelude.done();
       },
 
       popup(text, x, y, color) {
@@ -149,7 +156,7 @@
 
       onAction() {
         const p = this.player;
-        if (!this.script.done() || this.finishing > 0 || p.cooldown > 0 || p.stun > 0 || this.blocking()) return;
+        if (this.inPrelude() || !this.script.done() || this.finishing > 0 || p.cooldown > 0 || p.stun > 0 || this.blocking()) return;
         p.swing = SWING_MS;
         p.cooldown = PLAYER_COOLDOWN;
         if (this.distance() > PLAYER_RANGE) return;
@@ -214,6 +221,10 @@
         const p = this.player;
         const e = this.enemy;
 
+        if (this.inPrelude()) {
+          this.prelude.update(dt);
+          return;
+        }
         if (!this.script.done()) {
           this.script.update(dt);
           return;
@@ -295,6 +306,10 @@
       },
 
       render(ctx, t) {
+        if (this.inPrelude()) {
+          this.prelude.render(ctx, t);
+          return;
+        }
         ctx.save();
         if (this.shake > 0) {
           const m = this.shakeMag * (this.shake / 320);
@@ -349,6 +364,7 @@
       },
 
       hud() {
+        if (this.inPrelude()) return this.prelude.hud();
         if (!this.script.done()) return "...";
         return `${cfg.labels.player} ${Math.max(0, this.player.hp)} — ${cfg.labels.enemy} ${Math.max(0, this.enemy.hp)}`;
       },

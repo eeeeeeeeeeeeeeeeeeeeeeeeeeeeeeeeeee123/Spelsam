@@ -4,8 +4,7 @@
   const PASS = 7;
   const TIME_MS = 20000;
   const FEEDBACK_MS = 1200;
-  const CEREMONY_MS = 4200;
-  const TEACHER_LOOK = { ...G.SKINS.wit, hair: "kort", hairColor: "#8a8a8a", eyes: G.EYES.blauw, gender: "jongen", shirt: "#3a5a8a", pants: "#2a3040" };
+  const PASSED_MS = 1800;
 
   const TAAL = [
     ["Hij ___ morgen twaalf.", "wordt", ["word", "wort"]],
@@ -76,7 +75,7 @@
     return G.shuffle(list).map((q) => ({ ...q, options: G.shuffle([q.answer, ...q.wrong]) }));
   }
 
-  function drawHall(ctx, t) {
+  G.drawGraduationHall = (ctx, t) => {
     G.drawRoom(ctx, "#dfe8f5", "#9a7a5a", 280);
     ctx.fillStyle = "#b03a4a";
     ctx.fillRect(0, 0, W, 26);
@@ -93,9 +92,9 @@
       ctx.lineTo(i * 40 + 20, 50 + Math.sin(t * 2 + i) * 3);
       ctx.fill();
     }
-  }
+  };
 
-  function drawDiploma(ctx, x, y, s) {
+  G.drawDiploma = (ctx, x, y, s) => {
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(s, s);
@@ -109,7 +108,7 @@
     ctx.fillStyle = "#b03a4a";
     ctx.fillRect(-3, -7, 6, 14);
     ctx.restore();
-  }
+  };
 
   function wrapText(ctx, text, x, y, maxW, lineH) {
     const words = text.split(" ");
@@ -179,8 +178,8 @@
         return;
       }
       if (this.correct >= PASS) {
-        this.phase = "ceremony";
-        this.timer = CEREMONY_MS;
+        this.phase = "passed";
+        this.timer = PASSED_MS;
       } else {
         this.api.fail(`Gezakt: ${this.correct} van de ${QUESTIONS} goed. Je had er ${PASS} nodig.`);
       }
@@ -195,17 +194,13 @@
       this.timer -= dt;
       if (this.timer > 0) return;
       if (this.phase === "feedback") this.next();
-      else if (this.phase === "ceremony") this.api.complete();
+      else if (this.phase === "passed") this.api.complete();
     },
 
     render(ctx, t) {
-      if (this.phase === "ceremony") {
-        drawHall(ctx, t);
-        const k = Math.min(1, (1 - this.timer / CEREMONY_MS) * 2);
-        G.drawKid(ctx, 360, 390, 1.25, TEACHER_LOOK, { adult: true, facing: -1, t, armAngle: 0.1 });
-        const hand = G.drawKid(ctx, 170 + k * 90, 390, 1.15, G.playerKidLook(), { t, pose: k < 1 ? "walk" : "stand", armAngle: k >= 1 ? -1.9 : undefined });
-        drawDiploma(ctx, k >= 1 ? hand.x : 330, k >= 1 ? hand.y - 6 : 330, 1.4);
-        G.drawBanner(ctx, `Geslaagd! ${this.correct} / ${QUESTIONS}`, "#6ee07a", 110);
+      if (this.phase === "passed") {
+        G.drawClassroom(ctx);
+        G.drawBanner(ctx, `Geslaagd! ${this.correct} / ${QUESTIONS}`, "#6ee07a", H / 2);
         return;
       }
 
@@ -241,7 +236,7 @@
     },
 
     hud() {
-      if (this.phase === "ceremony") return "";
+      if (this.phase === "passed") return "Geslaagd!";
       return `Eindtoets: vraag ${Math.min(this.index + 1, QUESTIONS)} / ${QUESTIONS} · goed: ${this.correct}`;
     },
   };

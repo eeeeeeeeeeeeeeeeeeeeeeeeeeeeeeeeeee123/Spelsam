@@ -14,7 +14,7 @@
     {
       name: "Hoofdstuk 2: Opgroeien (0–12 jaar)",
       short: "H2",
-      levels: [G.c2level1, G.c2level2, G.c2level3, G.c2level4, G.c2level5, G.c2level6, G.c2level7, G.c2level8, G.c2level9, G.c2level10],
+      levels: [G.c2level1, G.c2level2, G.c2level3, G.c2level4, G.c2level5, G.c2level6, G.c2level7, G.c2level8, G.c2level9, G.c2level10, G.c2level11],
       win: {
         title: "Je hebt je diploma! 🎓",
         emoji: "🎓",
@@ -217,7 +217,7 @@
   const DIR_VECTORS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 
   // Held directions, for levels with free movement instead of discrete steps.
-  G.held = { up: false, down: false, left: false, right: false, block: false };
+  G.held = { up: false, down: false, left: false, right: false, block: false, action: false };
   const isBlockKey = (e) => e.key === "b" || e.key === "B";
 
   function direction(name, repeat) {
@@ -240,6 +240,7 @@
       direction(name, e.repeat);
     } else if (e.code === "Space") {
       e.preventDefault();
+      G.held.action = true;
       if (!e.repeat) action();
     } else if (isBlockKey(e)) {
       G.held.block = true;
@@ -250,6 +251,7 @@
     const name = keyName(e);
     if (name) G.held[name] = false;
     else if (isBlockKey(e)) G.held.block = false;
+    else if (e.code === "Space") G.held.action = false;
   });
 
   window.addEventListener("blur", () => {
@@ -270,8 +272,14 @@
   });
   $("actionBtn").addEventListener("pointerdown", (e) => {
     e.preventDefault();
+    G.held.action = true;
     action();
   });
+  for (const type of ["pointerup", "pointercancel", "pointerleave"]) {
+    $("actionBtn").addEventListener(type, () => {
+      G.held.action = false;
+    });
+  }
   $("blockBtn").addEventListener("pointerdown", (e) => {
     e.preventDefault();
     G.held.block = true;
