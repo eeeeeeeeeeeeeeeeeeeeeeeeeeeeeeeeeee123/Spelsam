@@ -31,6 +31,41 @@
 
   const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
+  function drawGraduationHall(ctx, t) {
+    G.drawRoom(ctx, "#dfe8f5", "#9a7a5a", 280);
+    ctx.fillStyle = "#b03a4a";
+    ctx.fillRect(0, 0, W, 26);
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 16px Segoe UI, Roboto, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("GEFELICITEERD GROEP 8!", W / 2, 19);
+    const colors = ["#e05a5a", "#5aa0e0", "#f0b43c", "#6cc46c", "#b07ad8"];
+    for (let i = 0; i < 14; i++) {
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.beginPath();
+      ctx.moveTo(i * 40, 26);
+      ctx.lineTo(i * 40 + 40, 26);
+      ctx.lineTo(i * 40 + 20, 50 + Math.sin(t * 2 + i) * 3);
+      ctx.fill();
+    }
+  }
+
+  function drawDiploma(ctx, x, y, s) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(s, s);
+    ctx.fillStyle = "#fff8e6";
+    ctx.fillRect(-18, -6, 36, 12);
+    ctx.fillStyle = "#e8dcc0";
+    ctx.beginPath();
+    ctx.arc(-18, 0, 6, 0, Math.PI * 2);
+    ctx.arc(18, 0, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#b03a4a";
+    ctx.fillRect(-3, -7, 6, 14);
+    ctx.restore();
+  }
+
   function drawNight(ctx, t, rage) {
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, `rgb(${20 + rage * 40}, 10, 35)`);
@@ -162,8 +197,8 @@
     ctx.restore();
   }
 
-  G.c2level11 = {
-    title: "Level 11 — De laatste nacht (12 jaar)",
+  G.c2level10 = {
+    title: "Level 10 — De laatste nacht (10 jaar)",
     intro:
       "De avond voor de diploma-uitreiking. Tijd om te slapen...<br>" +
       "<strong>Pijltjes / WASD</strong> = lopen. Mik met de <strong>muis</strong> en <strong>klik</strong> om te schieten (of <strong>SPATIE</strong> om te schieten waar je mikt).<br>" +
@@ -369,11 +404,11 @@
     },
 
     renderCeremony(ctx, t) {
-      G.drawGraduationHall(ctx, t);
+      drawGraduationHall(ctx, t);
       const k = Math.min(1, (1 - this.timer / CEREMONY_MS) * 2);
       G.drawKid(ctx, 360, 390, 1.25, PRINCIPAL_LOOK, { adult: true, facing: -1, t, armAngle: 0.1 });
       const hand = G.drawKid(ctx, 170 + k * 90, 390, 1.15, G.playerKidLook(), { t, pose: k < 1 ? "walk" : "stand", armAngle: k >= 1 ? 0.15 : undefined });
-      G.drawDiploma(ctx, k >= 1 ? hand.x + 14 : 330, k >= 1 ? hand.y : 330, 1.4);
+      drawDiploma(ctx, k >= 1 ? hand.x + 14 : 330, k >= 1 ? hand.y : 330, 1.4);
       G.drawBanner(ctx, "Gefeliciteerd met je diploma!", "#6ee07a", 110);
     },
 

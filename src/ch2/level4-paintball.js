@@ -153,7 +153,7 @@
   }
 
   G.c2level4 = {
-    title: "Level 4 — De uitdaging (6 jaar)",
+    title: "Level 4 — De uitdaging (4 jaar)",
     intro:
       "Loop met de <strong>pijltjes / WASD</strong>. Mik met de <strong>muis</strong> en schiet door te <strong>klikken</strong> (op mobiel: tik waar je heen schiet).<br>" +
       `Gebruik de bunkers als dekking. Wie het eerst <strong>${WINS_NEEDED} rondes</strong> wint, wint.`,

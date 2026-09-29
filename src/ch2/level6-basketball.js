@@ -256,7 +256,7 @@
   }
 
   G.c2level6 = G.makeFightLevel({
-    title: "Level 6 — Het basketbalveld (9 jaar)",
+    title: "Level 6 — Het basketbalveld (6 jaar)",
     intro:
       "Een middagje basketballen met je vrienden. Maak eerst <strong>3 driepunters</strong>: houd <strong>SPATIE</strong> ingedrukt en laat los als de streep in het groen staat.<br>" +
       "Daarna: <strong>pijltjes</strong> = lopen, <strong>SPATIE</strong> = slaan, <strong>B</strong> ingedrukt houden = blokken. Licht een vuist <strong>geel</strong> op? Dan komt er een klap aan.",

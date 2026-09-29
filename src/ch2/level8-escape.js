@@ -180,8 +180,9 @@
   const GUARD_LOOK = { ...G.SKINS.wit, hair: "kort", hairColor: "#2a1a12", eyes: G.EYES.bruin, gender: "jongen", shirt: "#2f3f5f", pants: "#1f2638" };
 
   G.c2level8 = {
-    title: "Level 8 — Ontsnappen (10 jaar)",
+    title: "Level 8 — Ontsnappen (8 jaar)",
     intro:
+      "Je zit op een streng internaat. Tijd om te ontsnappen!<br>" +
       "Loop met de <strong>pijltjes / WASD</strong>. Pak <strong>3 sleutels</strong> en ren naar de <strong>uitgang</strong> rechtsboven.<br>" +
       "Blijf uit de lichtkegels van <strong>bewakers</strong> en <strong>camera's</strong>. Sta je bij een <strong>kast</strong>? Druk op <strong>SPATIE</strong> om je te verstoppen (en nog eens om eruit te komen).",
 
@@ -284,7 +285,7 @@
         this.detect += dt;
         if (this.detect >= DETECT_MS) {
           this.over = true;
-          this.api.fail(`${seen} Je wordt teruggebracht naar je cel.`);
+          this.api.fail(`${seen} Je wordt teruggebracht naar je kamer.`);
         }
       } else this.detect = Math.max(0, this.detect - dt * 2);
     },

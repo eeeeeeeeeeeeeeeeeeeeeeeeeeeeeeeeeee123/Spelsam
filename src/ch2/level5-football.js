@@ -2,9 +2,9 @@
   const { W, H } = G;
   const TARGET = 7;
   const MATCH_MS = 75000;
-  const PLAYER_SPEED = 170;
+  const PLAYER_SPEED = 230;
   const SLIDE_MS = 280;
-  const SLIDE_SPEED = 340;
+  const SLIDE_SPEED = 420;
   const SLIDE_COOLDOWN = 700;
   const TACKLE_DIST = 30;
   const CARRIER_SPEED = 125;
@@ -60,7 +60,7 @@
   }
 
   G.c2level5 = {
-    title: "Level 5 — Je eerste wedstrijd (7 jaar)",
+    title: "Level 5 — Je eerste wedstrijd (5 jaar)",
     intro:
       "Je eerste voetbalwedstrijd! Maak minstens <strong>7 tackles</strong> voordat de wedstrijd voorbij is.<br>" +
       "Loop met de <strong>pijltjes / WASD</strong> en maak een sliding met <strong>SPATIE</strong> in de richting waarin je loopt.<br>" +

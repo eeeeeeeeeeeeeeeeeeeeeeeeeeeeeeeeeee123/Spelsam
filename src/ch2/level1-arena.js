@@ -53,7 +53,7 @@
   }
 
   G.c2level1 = {
-    title: "Level 1 — De baby-arena (0 jaar)",
+    title: "Level 1 — De baby-arena (1 jaar)",
     intro:
       "Je belandt in de <strong>baby-arena</strong>! Schakel <strong>5 baby's</strong> uit met je <strong>SPATIE</strong>-pistool. " +
       "Je schiet recht vooruit, en alleen een baby die boven zijn blok uitkomt kun je raken.<br>" +

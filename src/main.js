@@ -12,13 +12,13 @@
       },
     },
     {
-      name: "Hoofdstuk 2: Opgroeien (0–12 jaar)",
+      name: "Hoofdstuk 2: Opgroeien (1–10 jaar)",
       short: "H2",
-      levels: [G.c2level1, G.c2level2, G.c2level3, G.c2level4, G.c2level5, G.c2level6, G.c2level7, G.c2level8, G.c2level9, G.c2level10, G.c2level11],
+      levels: [G.c2level1, G.c2level2, G.c2level3, G.c2level4, G.c2level5, G.c2level6, G.c2level7, G.c2level8, G.c2level9, G.c2level10],
       win: {
         title: "Je hebt je diploma! 🎓",
         emoji: "🎓",
-        text: "Je bent 12 en klaar met de basisschool. Je hebt geleerd dat weglopen, een knuffel en hard werken sterker zijn dan vechten.",
+        text: "Je bent 10 en hebt je diploma. Je hebt geleerd dat weglopen, een knuffel en hard werken sterker zijn dan vechten.",
       },
     },
   ];

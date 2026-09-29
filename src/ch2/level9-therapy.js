@@ -93,9 +93,9 @@
   }
 
   G.c2level9 = {
-    title: "Level 9 — Therapie (11 jaar)",
+    title: "Level 9 — Therapie (9 jaar)",
     intro:
-      "Je bent weer thuis en gaat naar <strong>therapie</strong>. Dit is je laatste sessie.<br>" +
+      "Je bent weer thuis en gaat naar <strong>therapie</strong> om met je boosheid te leren omgaan. Dit is je laatste sessie.<br>" +
       `Vang eerst <strong>${CATCH_TARGET} goede gedachten</strong> (hartjes en sterren) met <strong>← →</strong>. Ontwijk de <strong>boze wolkjes</strong>: ${MAX_ANGRY} keer boos kost een hartje.<br>` +
       "Soms moet je een keuze maken: kies met <strong>← →</strong> en bevestig met <strong>SPATIE</strong>, of tik op een knop.",
 
