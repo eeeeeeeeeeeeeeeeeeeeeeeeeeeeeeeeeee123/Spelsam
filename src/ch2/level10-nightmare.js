@@ -5,26 +5,26 @@
   const WAKE_MS = 1800;
   const CEREMONY_MS = 4200;
   const PLAYER_SPEED = 175;
-  const PLAYER_HP = 3;
-  const INVULN_MS = 900;
+  const PLAYER_HP = 4;
+  const INVULN_MS = 1200;
   const BOUNDS = { minX: 20, maxX: W - 20, minY: 200, maxY: H - 15 };
-  const SHOT_COOLDOWN = 280;
-  const LIGHT_SPEED = 520;
-  const BOSS_HP = 12;
+  const SHOT_COOLDOWN = 240;
+  const LIGHT_SPEED = 560;
+  const BOSS_HP = 9;
   const BOSS_Y = 110;
   const BODY_R = 78;
-  const EYE_R = 26;
-  const EYE_OPEN_MS = 1500;
+  const EYE_R = 30;
+  const EYE_OPEN_MS = 2200;
   const PHASES = [
-    { closedMs: 2000, volleyMs: 1600, orbs: 3, orbSpeed: 160, sway: 60 },
-    { closedMs: 1600, volleyMs: 1250, orbs: 5, orbSpeed: 190, sway: 110, minions: true },
-    { closedMs: 1300, volleyMs: 950, orbs: 5, orbSpeed: 220, sway: 150, minions: true, slams: true },
+    { closedMs: 1700, volleyMs: 2000, orbs: 3, orbSpeed: 140, sway: 50 },
+    { closedMs: 1500, volleyMs: 1700, orbs: 3, orbSpeed: 160, sway: 80, minions: true },
+    { closedMs: 1300, volleyMs: 1400, orbs: 4, orbSpeed: 175, sway: 110, minions: true, slams: true },
   ];
-  const MINION_MS = 2600;
-  const MINION_MAX = 3;
-  const MINION_SPEED = 75;
-  const SLAM_MS = 3200;
-  const SLAM_WARN_MS = 800;
+  const MINION_MS = 3400;
+  const MINION_MAX = 2;
+  const MINION_SPEED = 60;
+  const SLAM_MS = 4200;
+  const SLAM_WARN_MS = 1100;
   const SLAM_HIT_MS = 300;
   const SLAM_W = 70;
   const PRINCIPAL_LOOK = { ...G.SKINS.wit, hair: "kort", hairColor: "#8a8a8a", eyes: G.EYES.blauw, gender: "jongen", shirt: "#3a5a8a", pants: "#2a3040" };
@@ -202,7 +202,7 @@
     intro:
       "De avond voor de diploma-uitreiking. Tijd om te slapen...<br>" +
       "<strong>Pijltjes / WASD</strong> = lopen. Mik met de <strong>muis</strong> en <strong>klik</strong> om te schieten (of <strong>SPATIE</strong> om te schieten waar je mikt).<br>" +
-      "Zoek de zwakke plek. Je kunt <strong>3 klappen</strong> hebben.",
+      `Zoek de zwakke plek. Je kunt <strong>${PLAYER_HP} klappen</strong> hebben.`,
 
     drawBackground(ctx, t) {
       drawBedroom(ctx, t, false);
