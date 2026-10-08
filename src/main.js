@@ -21,6 +21,16 @@
         text: "Je bent 10 en hebt je diploma. Je hebt geleerd dat weglopen, een knuffel en hard werken sterker zijn dan vechten.",
       },
     },
+    {
+      name: "Hoofdstuk 3: Tiener (11–20 jaar)",
+      short: "H3",
+      levels: [G.c3level1, G.c3level2, G.c3level3, G.c3level4, G.c3level5],
+      win: {
+        title: "Volwassen! 🎉",
+        emoji: "🎉",
+        text: "Je hebt de tienerjaren overleefd.",
+      },
+    },
   ];
 
   const canvas = document.getElementById("gameCanvas");
@@ -316,6 +326,7 @@
   }
   onButton("chapter1Btn", () => startChapter(0));
   onButton("chapter2Btn", () => startChapter(1));
+  onButton("chapter3Btn", () => startChapter(2));
   onButton("appearanceBtn", showCreator);
   onButton("creatorDoneBtn", () => {
     G.setAppearance(draft);
