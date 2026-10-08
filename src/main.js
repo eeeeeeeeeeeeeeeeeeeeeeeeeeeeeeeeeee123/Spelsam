@@ -24,7 +24,7 @@
     {
       name: "Hoofdstuk 3: Tiener (11–20 jaar)",
       short: "H3",
-      levels: [G.c3level1, G.c3level2, G.c3level3, G.c3level4, G.c3level5],
+      levels: [G.c3level1, G.c3level2, G.c3level3, G.c3level4, G.c3level5, G.c3level6, G.c3level7, G.c3level8, G.c3level9],
       win: {
         title: "Volwassen! 🎉",
         emoji: "🎉",
