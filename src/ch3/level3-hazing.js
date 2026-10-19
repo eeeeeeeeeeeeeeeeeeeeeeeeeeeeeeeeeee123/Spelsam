@@ -9,8 +9,13 @@
   const SHOVE_BACK = 70;
   const STUN_MS = 1100;
   const GRAB_RANGE = 20;
-  const GRAB_FILL = 42;
+  const GRAB_FILL = 34;
   const GRAB_DRAIN = 55;
+  const MAX_GRABBERS = 2;
+  const ESCAPE_PRESSES = 5;
+  const ESCAPE_RANGE = 70;
+  const ESCAPE_BACK = 90;
+  const FREE_MS = 1200;
   const BOUNDS = { minX: 20, maxX: W - 20, minY: 70, maxY: H - 20 };
 
   function drawYard(ctx) {
@@ -37,7 +42,7 @@
     intro:
       "Je eerste dag op de middelbare. Ouderejaars willen je in de <strong>prullenbak</strong> stoppen!<br>" +
       "Ren met de <strong>pijltjes / WASD</strong>. Duw ze weg met <strong>SPATIE</strong> als ze dichtbij zijn.<br>" +
-      "Pakken ze je beet? <strong>Ram op SPATIE</strong> om los te komen. Overleef <strong>30 seconden</strong>.",
+      "Pakken ze je beet? Druk <strong>5× op SPATIE</strong> om je los te rukken. Overleef <strong>30 seconden</strong>.",
 
     drawBackground(ctx) {
       drawYard(ctx);
@@ -48,6 +53,8 @@
       this.player = { x: W / 2, y: H - 70, facing: 1, moving: false };
       this.cooldown = 0;
       this.grab = 0;
+      this.escape = 0;
+      this.free = 0;
       this.time = SURVIVE_MS;
       this.popups = [];
       this.flash = 0;
@@ -72,7 +79,10 @@
       if (this.over) return;
       const p = this.player;
       if (this.grab > 0) {
-        this.grab = Math.max(0, this.grab - 7);
+        // each press counts toward breaking loose; enough presses shoves everyone off
+        this.grab = Math.max(0, this.grab - 6);
+        this.escape++;
+        if (this.escape >= ESCAPE_PRESSES) this.breakFree();
         return;
       }
       if (this.cooldown > 0) return;
@@ -91,11 +101,28 @@
       if (shoved) this.popup("Wegwezen!", p.x, p.y - 60, "#6ee07a");
     },
 
+    breakFree() {
+      const p = this.player;
+      this.grab = 0;
+      this.escape = 0;
+      this.free = FREE_MS;
+      for (const c of this.chasers) {
+        const d = dist(c, p);
+        if (d < ESCAPE_RANGE) {
+          c.x += ((c.x - p.x) / (d || 1)) * ESCAPE_BACK;
+          c.y += ((c.y - p.y) / (d || 1)) * ESCAPE_BACK;
+          c.stun = STUN_MS;
+        }
+      }
+      this.popup("LOS!", p.x, p.y - 60, "#6ee07a");
+    },
+
     update(dt) {
       if (this.over) return;
       const s = dt / 1000;
       this.cooldown = Math.max(0, this.cooldown - dt);
       this.flash = Math.max(0, this.flash - dt);
+      this.free = Math.max(0, this.free - dt);
       this.popups = G.updatePopups(this.popups, dt);
       const p = this.player;
 
@@ -117,8 +144,8 @@
       }
 
       const moving = !this.grab && (G.held.left || G.held.right || G.held.up || G.held.down);
-      if (grabbers > 0) {
-        this.grab = Math.min(100, this.grab + GRAB_FILL * grabbers * s);
+      if (grabbers > 0 && this.free <= 0) {
+        this.grab = Math.min(100, this.grab + GRAB_FILL * Math.min(grabbers, MAX_GRABBERS) * s);
         this.flash = 200;
         if (this.grab >= 100) {
           this.over = true;
@@ -127,6 +154,7 @@
         }
       } else {
         this.grab = Math.max(0, this.grab - GRAB_DRAIN * s);
+        if (this.grab <= 0) this.escape = 0;
       }
 
       if (this.grab < 60) {
@@ -174,7 +202,7 @@
         ctx.fillRect(p.x - 40, p.y - 78, 80 * (this.grab / 100), 10);
         ctx.fillStyle = "#fff";
         ctx.font = "bold 11px Segoe UI, Roboto, sans-serif";
-        ctx.fillText("RAM SPATIE!", p.x, p.y - 84);
+        ctx.fillText(`RAM SPATIE! ${this.escape}/${ESCAPE_PRESSES}`, p.x, p.y - 84);
       }
       G.drawPopups(ctx, this.popups);
     },
