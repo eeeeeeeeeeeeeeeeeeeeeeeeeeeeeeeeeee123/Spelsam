@@ -57,6 +57,13 @@
   let lastTime = performance.now();
   let draft = { ...G.appearance };
 
+  // Godmode: endless hearts and a skip button. Toggle with G or the menu button.
+  const GOD_KEY = "spelsam-godmode";
+  let godmode = false;
+  try {
+    godmode = localStorage.getItem(GOD_KEY) === "1";
+  } catch (e) {}
+
   const levels = () => CHAPTERS[chapter].levels;
   const level = () => levels()[levelIndex];
 
@@ -85,18 +92,19 @@
     fail(reason) {
       if (mode !== "playing") return;
       level().stop?.();
-      hearts--;
+      if (!godmode) hearts--;
       if (hearts <= 0) {
         showGameOver("Game Over 💥", reason, "Je hartjes zijn op. Terug naar level 1 van dit hoofdstuk!");
       } else {
         mode = "failed";
         $("failReason").textContent = reason;
-        $("failHearts").textContent = `Nog ${hearts} ${hearts === 1 ? "hartje" : "hartjes"} over.`;
+        $("failHearts").textContent = godmode ? "Godmode: je hartjes zijn oneindig." : `Nog ${hearts} ${hearts === 1 ? "hartje" : "hartjes"} over.`;
         showScreen("fail");
       }
     },
     restartChapter(reason) {
       if (mode !== "playing") return;
+      if (godmode) return api.fail(reason);
       level().stop?.();
       showGameOver("Helemaal opnieuw", reason, "Het maakt niet uit hoeveel hartjes je had.");
     },
@@ -120,6 +128,22 @@
     $("introTitle").textContent = level().title;
     $("introText").innerHTML = level().intro;
     showScreen("intro");
+  }
+
+  function skipLevel() {
+    if (!godmode || !["intro", "playing", "failed"].includes(mode)) return;
+    if (mode === "playing") level().stop?.();
+    mode = "playing";
+    api.complete();
+  }
+
+  function setGodmode(on) {
+    godmode = on;
+    try {
+      localStorage.setItem(GOD_KEY, on ? "1" : "0");
+    } catch (e) {}
+    $("godBtn").textContent = `Godmode: ${on ? "AAN ⚡" : "UIT"}`;
+    for (const id of ["introSkipBtn", "failSkipBtn"]) $(id).classList.toggle("hidden", !on);
   }
 
   function playLevel() {
@@ -195,7 +219,7 @@
     const inGame = mode !== "home" && mode !== "creator";
     $("hud").classList.toggle("hidden", !inGame);
     $("levelLabel").textContent = inGame ? `${CHAPTERS[chapter].short} · Level ${levelIndex + 1} / ${levels().length}` : "Race naar het Leven";
-    $("hearts").textContent = inGame ? "❤️".repeat(Math.max(0, hearts)) + "🤍".repeat(MAX_HEARTS - Math.max(0, hearts)) : "";
+    $("hearts").textContent = inGame && godmode ? "⚡ ❤️ ∞" : inGame ? "❤️".repeat(Math.max(0, hearts)) + "🤍".repeat(MAX_HEARTS - Math.max(0, hearts)) : "";
     $("progress").textContent = mode === "playing" || mode === "failed" ? level().hud() : "";
   }
 
@@ -254,6 +278,10 @@
       if (!e.repeat) action();
     } else if (isBlockKey(e)) {
       G.held.block = true;
+    } else if ((e.key === "g" || e.key === "G") && !e.repeat) {
+      setGodmode(!godmode);
+    } else if ((e.key === "n" || e.key === "N") && !e.repeat) {
+      skipLevel();
     }
   });
 
@@ -340,6 +368,10 @@
   onButton("gameOverMenuBtn", showHome);
   onButton("nextChapterBtn", () => startChapter(chapter + 1));
   onButton("winMenuBtn", showHome);
+  onButton("godBtn", () => setGodmode(!godmode));
+  onButton("introSkipBtn", skipLevel);
+  onButton("failSkipBtn", skipLevel);
+  setGodmode(godmode);
 
   // ---- Confetti ----
   const confettiColors = ["#ff8fb1", "#7fd1ff", "#ffd873", "#a0ffb4", "#c9a0ff"];
