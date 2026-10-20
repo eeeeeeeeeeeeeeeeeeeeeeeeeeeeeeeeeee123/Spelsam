@@ -10,7 +10,9 @@
   const Z_SPEED = 26;
   const Z_HP = 2;
   const BIG_HP = 24;
-  const WAVES = [6, 9, 12, 15];
+  const WAVES = [7, 10, 13];
+  const BOSS_MINIONS = 8;
+  const ZIG = 55;
   const WAVE_GAP = 2200;
 
   const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -37,7 +39,9 @@
   }
 
   function drawZombie(ctx, z, t) {
-    const scale = z.big ? 1.9 : 1;
+    // farther away (higher up) = smaller
+    const depth = 0.6 + 0.4 * G.clamp((z.y - 20) / (BASE_Y - 20), 0, 1);
+    const scale = (z.big ? 1.9 : 1) * depth;
     const wob = Math.sin(t * 6 + z.seed) * 3 * scale;
     ctx.fillStyle = z.flash > 0 ? "#fff" : "#4a7a3a";
     ctx.save();
@@ -74,9 +78,9 @@
   G.c3level5 = {
     title: "Level 5 — Zombienacht (15 jaar)",
     intro:
-      "Op het nieuws: een zombie-uitbraak! 's Nachts klimmen ze tegen je huis op.<br>" +
+      "Op het nieuws: een zombie-uitbraak! 's Nachts komen ze van <strong>boven</strong> en van <strong>linksboven en rechtsboven</strong> kriskras op je af.<br>" +
       "Sta op je dak en mik met de <strong>muis</strong>, schiet met <strong>klik</strong> of <strong>SPATIE</strong>.<br>" +
-      "Je magazijn heeft 30 kogels; leeg = automatisch herladen. Overleef alle golven!",
+      "Je magazijn heeft 30 kogels; leeg = automatisch herladen. Overleef 3 golven en de <strong>grote zombie</strong> met zijn kleine maatjes!",
 
     drawBackground(ctx, t) {
       drawScene(ctx, t);
@@ -112,8 +116,9 @@
     },
 
     startWave() {
-      this.toSpawn = this.waveIndex < WAVES.length ? WAVES[this.waveIndex] : 1;
       this.bigWave = this.waveIndex >= WAVES.length;
+      this.toSpawn = this.bigWave ? 1 + BOSS_MINIONS : WAVES[this.waveIndex];
+      this.bossSpawned = false;
     },
 
     popup(text, x, y, color) {
@@ -144,11 +149,20 @@
       this.aim = { x, y };
     },
 
+    // zombies come from the top and from high up on the left and right,
+    // zig-zagging toward you
     spawnZombie(big) {
-      const side = Math.random() < 0.5 ? 0 : 1;
-      const x = side ? W + 20 : -20;
-      const y = 95 + Math.random() * 20;
-      this.zombies.push({ x, y, hp: big ? BIG_HP : Z_HP, big, flash: 0, seed: Math.random() * 10 });
+      const from = big ? 0 : G.randInt(3);
+      let x, y;
+      if (from === 0) {
+        x = 60 + Math.random() * (W - 120);
+        y = -20;
+      } else {
+        x = from === 1 ? -20 : W + 20;
+        y = 20 + Math.random() * 110;
+      }
+      const sp = big ? Z_SPEED * 0.75 : Z_SPEED * (1.4 + Math.random() * 0.5);
+      this.zombies.push({ x, y, ox: x, oy: y, prog: 0, sp, hp: big ? BIG_HP : Z_HP, big, flash: 0, seed: Math.random() * 10, zig: (big ? 0.4 : 1) * ZIG * (0.6 + Math.random() * 0.6), freq: 2 + Math.random() * 2 });
     },
 
     update(dt, t) {
@@ -169,8 +183,14 @@
         if (this.toSpawn > 0) {
           this.spawnTimer -= dt;
           if (this.spawnTimer <= 0) {
-            this.spawnTimer = this.bigWave ? 9999 : 500 + Math.random() * 500;
-            this.spawnZombie(this.bigWave);
+            if (this.bigWave && !this.bossSpawned) {
+              this.bossSpawned = true;
+              this.spawnZombie(true);
+              this.spawnTimer = 1500;
+            } else {
+              this.spawnZombie(false);
+              this.spawnTimer = this.bigWave ? 1400 + Math.random() * 800 : 500 + Math.random() * 500;
+            }
             this.toSpawn--;
           }
         } else if (this.zombies.length === 0) {
@@ -194,12 +214,15 @@
 
       for (const z of this.zombies) {
         z.flash = Math.max(0, z.flash - dt);
-        // move toward base x then climb
-        const tx = GUN.x;
-        const dx = tx - z.x;
-        if (Math.abs(dx) > 4) z.x += Math.sign(dx) * Z_SPEED * s * (z.big ? 0.7 : 1);
-        else z.y += (z.big ? 0.6 : 1) * Z_SPEED * s;
-        if (z.y >= BASE_Y - 4) {
+        // walk the straight line to you, swaying side to side across it
+        const tx = GUN.x, ty = BASE_Y;
+        const len = Math.hypot(tx - z.ox, ty - z.oy) || 1;
+        z.prog = Math.min(1, z.prog + (z.sp * s) / len);
+        const nx = -(ty - z.oy) / len, ny = (tx - z.ox) / len;
+        const sway = Math.sin(z.prog * len * 0.02 * z.freq + z.seed) * z.zig * (1 - z.prog * 0.8);
+        z.x = z.ox + (tx - z.ox) * z.prog + nx * sway;
+        z.y = z.oy + (ty - z.oy) * z.prog + ny * sway;
+        if (z.prog >= 1 || z.y >= BASE_Y - 4) {
           z.done = true;
           this.hp--;
           this.flash = 350;
@@ -221,7 +244,8 @@
         }
         for (const z of this.zombies) {
           if (z.done) continue;
-          if (dist(b, { x: z.x, y: z.y - 20 }) < (z.big ? 34 : 15)) {
+          const depth = 0.6 + 0.4 * G.clamp((z.y - 20) / (BASE_Y - 20), 0, 1);
+          if (dist(b, { x: z.x, y: z.y - 20 * depth }) < (z.big ? 34 : 16) * depth) {
             b.done = true;
             z.hp--;
             z.flash = 90;

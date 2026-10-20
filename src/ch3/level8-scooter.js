@@ -138,9 +138,25 @@
       let chasing = false;
       for (const c of this.police) {
         if (c.spin > 0) { c.spin -= dt; c.y += SCROLL * 1.5 * s; c.x += c.spinVx * s; continue; }
-        // drive up toward player
-        const dx = p.x - c.x;
-        c.x += Math.sign(dx) * Math.min(Math.abs(dx), POLICE_SPEED * s);
+        // drive up toward player, but steer around traffic ahead
+        let dx = p.x - c.x;
+        const ahead = this.obstacles.find((o) => !o.hit && o.y < c.y + 10 && c.y - o.y < 110 && Math.abs(o.x - c.x) < 40);
+        if (ahead) {
+          const roomLeft = ahead.x - ROAD.x, roomRight = ROAD.x + ROAD.w - ahead.x;
+          const goRight = c.x > ahead.x ? roomRight > 45 : roomLeft < 45;
+          dx = (goRight ? 1 : -1) * 100;
+        }
+        c.x += Math.sign(dx) * Math.min(Math.abs(dx), POLICE_SPEED * (ahead ? 1.8 : 1) * s);
+        c.x = G.clamp(c.x, ROAD.x + 16, ROAD.x + ROAD.w - 16);
+        // still bumped into a car? it spins out
+        const bump = this.obstacles.find((o) => !o.hit && Math.abs(o.x - c.x) < 28 && Math.abs(o.y - c.y) < 44);
+        if (bump) {
+          bump.hit = true;
+          c.spin = 1200;
+          c.spinVx = (c.x < bump.x ? -1 : 1) * 160;
+          this.popup("BOTSING!", c.x, c.y - 20, "#ffd24a");
+          continue;
+        }
         if (c.y > p.y + 40) c.y -= (POLICE_SPEED * 0.7) * s;
         else c.y += (SCROLL * 0.02) * s;
         if (dist(c, p) < CATCH_RANGE) chasing = true;

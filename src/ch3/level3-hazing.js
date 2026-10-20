@@ -1,9 +1,18 @@
 (() => {
   const { W, H } = G;
-  const SURVIVE_MS = 30000;
+  const SURVIVE_MS = 20000;
   const PLAYER_SPEED = 185;
   const R = 13;
   const CHASER_SPEED = 120;
+  const SEPARATION = 38;
+  // Each bully hunts differently so they don't all trail you in one clump.
+  const KINDS = [
+    { kind: "jager", speed: 118 }, // straight at you
+    { kind: "afsnijder", speed: 108 }, // runs to where you're going
+    { kind: "flank", speed: 125 }, // circles to your side, then dives in
+    { kind: "sprinter", speed: 70, burst: 230 }, // ambles, then sudden sprints
+    { kind: "lomperd", speed: 85 }, // slow but keeps coming
+  ];
   const SHOVE_RANGE = 46;
   const SHOVE_COOLDOWN = 650;
   const SHOVE_BACK = 70;
@@ -42,7 +51,7 @@
     intro:
       "Je eerste dag op de middelbare. Ouderejaars willen je in de <strong>prullenbak</strong> stoppen!<br>" +
       "Ren met de <strong>pijltjes / WASD</strong>. Duw ze weg met <strong>SPATIE</strong> als ze dichtbij zijn.<br>" +
-      "Pakken ze je beet? Druk <strong>5× op SPATIE</strong> om je los te rukken. Overleef <strong>30 seconden</strong>.",
+      "Pakken ze je beet? Druk <strong>5× op SPATIE</strong> om je los te rukken. Overleef <strong>20 seconden</strong>. Elke pestkop jaagt op zijn eigen manier!",
 
     drawBackground(ctx) {
       drawYard(ctx);
@@ -50,7 +59,7 @@
 
     start(api) {
       this.api = api;
-      this.player = { x: W / 2, y: H - 70, facing: 1, moving: false };
+      this.player = { x: W / 2, y: H - 70, facing: 1, moving: false, vx: 0, vy: 0 };
       this.cooldown = 0;
       this.grab = 0;
       this.escape = 0;
@@ -60,11 +69,15 @@
       this.flash = 0;
       this.over = false;
       this.chasers = [];
-      for (let i = 0; i < 5; i++) {
-        const a = (i / 5) * Math.PI * 2;
+      for (let i = 0; i < KINDS.length; i++) {
+        const a = (i / KINDS.length) * Math.PI * 2;
         this.chasers.push({
+          ...KINDS[i],
           x: W / 2 + Math.cos(a) * 180,
           y: 180 + Math.sin(a) * 90,
+          side: i % 2 ? 1 : -1,
+          sprint: 0,
+          sprintCd: 1500 + Math.random() * 1500,
           stun: 0,
           look: G.randomLook({ shirt: ["#8a2b4a", "#2b4a8a", "#6a2b8a", "#8a6a2b"][i % 4] }),
         });
@@ -138,9 +151,49 @@
         c.stun = Math.max(0, c.stun - dt);
         if (c.stun > 0) continue;
         const d = dist(c, p) || 1;
-        c.x += ((p.x - c.x) / d) * CHASER_SPEED * s;
-        c.y += ((p.y - c.y) / d) * CHASER_SPEED * s;
+        let tx = p.x, ty = p.y, speed = c.speed;
+        if (c.kind === "afsnijder" && d > 50) {
+          tx = p.x + p.vx * 0.9;
+          ty = p.y + p.vy * 0.9;
+        } else if (c.kind === "flank" && d > 80) {
+          // aim at a point beside you
+          const nx = -(p.y - c.y) / d, ny = (p.x - c.x) / d;
+          tx = p.x + nx * 90 * c.side;
+          ty = p.y + ny * 90 * c.side;
+        } else if (c.kind === "sprinter") {
+          c.sprintCd -= dt;
+          c.sprint = Math.max(0, c.sprint - dt);
+          if (c.sprintCd <= 0 && d < 200) {
+            c.sprint = 650;
+            c.sprintCd = 2200 + Math.random() * 1200;
+          }
+          if (c.sprint > 0) speed = c.burst;
+        }
+        tx = G.clamp(tx, BOUNDS.minX, BOUNDS.maxX);
+        ty = G.clamp(ty, BOUNDS.minY, BOUNDS.maxY);
+        const td = Math.hypot(tx - c.x, ty - c.y) || 1;
+        c.x += ((tx - c.x) / td) * speed * s;
+        c.y += ((ty - c.y) / td) * speed * s;
         if (d < GRAB_RANGE) grabbers++;
+      }
+      // keep bullies apart so they spread out instead of stacking
+      for (let i = 0; i < this.chasers.length; i++) {
+        for (let k = i + 1; k < this.chasers.length; k++) {
+          const a = this.chasers[i], b = this.chasers[k];
+          const d = dist(a, b);
+          if (d > 0 && d < SEPARATION) {
+            const push = (SEPARATION - d) / 2;
+            const ux = (a.x - b.x) / d, uy = (a.y - b.y) / d;
+            a.x += ux * push;
+            a.y += uy * push;
+            b.x -= ux * push;
+            b.y -= uy * push;
+          }
+        }
+      }
+      for (const c of this.chasers) {
+        c.x = G.clamp(c.x, BOUNDS.minX, BOUNDS.maxX);
+        c.y = G.clamp(c.y, BOUNDS.minY, BOUNDS.maxY);
       }
 
       const moving = !this.grab && (G.held.left || G.held.right || G.held.up || G.held.down);
@@ -163,11 +216,16 @@
         if (mx || my) {
           const len = Math.hypot(mx, my);
           const slow = this.grab > 0 ? 0.4 : 1;
-          p.x += (mx / len) * PLAYER_SPEED * slow * s;
-          p.y += (my / len) * PLAYER_SPEED * slow * s;
+          p.vx = (mx / len) * PLAYER_SPEED * slow;
+          p.vy = (my / len) * PLAYER_SPEED * slow;
+          p.x += p.vx * s;
+          p.y += p.vy * s;
           if (mx) p.facing = mx;
           p.moving = true;
-        } else p.moving = false;
+        } else {
+          p.moving = false;
+          p.vx = p.vy = 0;
+        }
         p.x = G.clamp(p.x, BOUNDS.minX, BOUNDS.maxX);
         p.y = G.clamp(p.y, BOUNDS.minY, BOUNDS.maxY);
       }
@@ -179,6 +237,9 @@
       const actors = this.chasers.map((c) => ({ y: c.y, draw: () => G.drawKid(ctx, c.x, c.y + 14, 0.62, c.look, { t, facing: p.x < c.x ? -1 : 1, pose: c.stun > 0 ? "down" : "walk", angry: true, dizzy: c.stun > 0 }) }));
       actors.push({ y: p.y, draw: () => G.drawKid(ctx, p.x, p.y + 14, 0.62, G.playerKidLook(), { t, facing: p.facing, pose: p.moving ? "walk" : "stand", crying: this.grab > 30 }) });
       actors.sort((a, b) => a.y - b.y).forEach((a) => a.draw());
+      ctx.font = "14px serif";
+      ctx.textAlign = "center";
+      for (const c of this.chasers) if (c.sprint > 0 && c.stun <= 0) ctx.fillText("💨", c.x - 14 * (p.x < c.x ? -1 : 1), c.y - 6);
 
       if (this.flash > 0) {
         ctx.fillStyle = `rgba(200,40,40,${0.25 * (this.flash / 200)})`;

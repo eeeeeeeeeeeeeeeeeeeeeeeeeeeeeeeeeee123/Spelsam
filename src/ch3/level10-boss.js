@@ -9,11 +9,12 @@
   const RELOAD_MS = 1600;
   const FIRE_MS = 95;
   const BULLET_SPEED = 820;
-  const BOSS_HP = 160;
+  // per boss, much lower than before
+  const BOSS_HPS = { drank: 100, drugs: 95, gokken: 85 };
   const BOSS_Y = 120;
   const BOSS_R = 55;
   const WINDUP_MS = 700;
-  const ATTACK_GAP = [1700, 1100];
+  const ATTACK_GAP = [2100, 1600];
   const STATUS_MS = 2600;
   const KO_MS = 1800;
   const NECK = 94;
@@ -37,7 +38,7 @@
       bg: ["#2a1a0a", "#4a2f12"],
       intro:
         "Je drankgebruik is uit de hand gelopen. Het is een <strong>monster</strong> geworden: <strong>De Bierfles</strong>.<br>" +
-        "Hij <strong>giet bier</strong> op je en schiet <strong>schuimballen</strong>. Geraakt = <strong>dronken</strong>: je besturing draait om.<br>" +
+        "Hij <strong>giet bier</strong> op je en schiet <strong>schuimballen</strong> (die kun je kapotschieten). Geraakt = <strong>dronken</strong>: je besturing draait om.<br>" +
         "Loop met <strong>← →</strong> / <strong>A D</strong>, mik met de <strong>muis</strong>, schiet met <strong>klik</strong> of <strong>SPATIE</strong>. Versla je verslaving!",
       fail: "De drank won deze keer. Hulp vragen is geen zwakte.",
     },
@@ -59,7 +60,7 @@
       bg: ["#0a2a1a", "#103a26"],
       intro:
         "Je gokgedrag is uit de hand gelopen. Het is een <strong>monster</strong> geworden: <strong>De Schoppenvrouw</strong>.<br>" +
-        "Ze gooit <strong>kaarten</strong> (aas t/m 10, harten, ruiten, schoppen en klaver) naar je. Geraakt = je verliest je <strong>inzet</strong>: 10 kogels weg.<br>" +
+        "Ze gooit <strong>kaarten</strong> (aas t/m 10, harten, ruiten, schoppen en klaver) naar je. <strong>Schiet de kaarten kapot</strong> of ontwijk ze. Geraakt = je verliest je <strong>inzet</strong>: 10 kogels weg.<br>" +
         "Loop met <strong>← →</strong> / <strong>A D</strong>, mik met de <strong>muis</strong>, schiet met <strong>klik</strong> of <strong>SPATIE</strong>. Versla je verslaving!",
       fail: "Het gokken won deze keer. Hulp vragen is geen zwakte.",
     },
@@ -355,7 +356,7 @@
       this.api = api;
       this.kind = kind();
       this.player = { x: W / 2, hp: PLAYER_HP, invuln: 0, facing: 1 };
-      this.boss = { x: W / 2, y: BOSS_Y, hp: BOSS_HP, tilt: 0, flash: 0, phase: 0, homeX: W / 2, blowing: 0 };
+      this.boss = { x: W / 2, y: BOSS_Y, hp: BOSS_HPS[this.kind], maxHp: BOSS_HPS[this.kind], tilt: 0, flash: 0, phase: 0, homeX: W / 2, blowing: 0 };
       this.aim = { x: W / 2, y: BOSS_Y };
       this.ammo = MAG;
       this.reload = 0;
@@ -458,26 +459,26 @@
       if (a.name === "pour") {
         this.pour = { targetX: a.targetX, x: a.targetX, top: b.y, time: enraged ? 1600 : 1200, hit: false };
       } else if (a.name === "foam") {
-        const n = enraged ? 7 : 5;
+        const n = enraged ? 3 : 2;
         for (let i = 0; i < n; i++) {
-          const v = aimAt(b.x, b.y + 40, 170, (i - (n - 1) / 2) * 0.22);
+          const v = aimAt(b.x, b.y + 40, 140, (i - (n - 1) / 2) * 0.42);
           this.shots.push({ kind: "foam", x: b.x, y: b.y + 40, ...v, r: 11 });
         }
       } else if (a.name === "smoke") {
-        const n = enraged ? 4 : 3;
+        const n = enraged ? 3 : 2;
         for (let i = 0; i < n; i++) {
           const v = aimAt(b.x - 10, b.y + 15, 70 + i * 18, (i - (n - 1) / 2) * 0.35);
-          this.shots.push({ kind: "smoke", x: b.x - 10, y: b.y + 15, ...v, r: 18, grow: 10, hp: 3, flash: 0 });
+          this.shots.push({ kind: "smoke", x: b.x - 10, y: b.y + 15, ...v, r: 17, grow: 0, hp: 2, flash: 0 });
         }
         b.blowing = 500;
       } else if (a.name === "ash") {
-        const n = enraged ? 14 : 10;
+        const n = enraged ? 7 : 5;
         for (let i = 0; i < n; i++) {
-          this.shots.push({ kind: "ash", x: 20 + Math.random() * (W - 40), y: -10 - Math.random() * 160, vx: 0, vy: 150 + Math.random() * 60, r: 6 });
+          this.shots.push({ kind: "ash", x: 20 + Math.random() * (W - 40), y: -10 - Math.random() * 160, vx: 0, vy: 105 + Math.random() * 40, r: 6 });
         }
       } else if (a.name === "fan") {
         // wide fan with one card missing: that hole is your way out
-        const n = enraged ? 7 : 5;
+        const n = enraged ? 5 : 4;
         const hole = Math.floor(Math.random() * n);
         for (let i = 0; i < n; i++) {
           if (i === hole) continue;
@@ -486,10 +487,10 @@
         }
       } else if (a.name === "deal") {
         // a quick burst of single cards dealt straight at you
-        const n = enraged ? 6 : 4;
+        const n = enraged ? 3 : 2;
         for (let i = 0; i < n; i++) {
-          this.queue.push({ delay: i * 220, fn: () => {
-            const v = aimAt(b.x, b.y + 20, 300, 0);
+          this.queue.push({ delay: i * 380, fn: () => {
+            const v = aimAt(b.x, b.y + 20, 240, 0);
             this.shots.push({ kind: "card", x: b.x, y: b.y + 20, ...v, r: 12, rot: 0, vr: 14, rank: G.pick(RANKS), suit: G.pick(SUITS) });
           } });
         }
@@ -598,7 +599,7 @@
           sh.r = Math.min(46, sh.r + sh.grow * s);
           sh.flash = Math.max(0, sh.flash - dt);
           // smoke drifts toward you
-          sh.vx += Math.sign(p.x - sh.x) * 18 * s;
+          sh.vx += Math.sign(p.x - sh.x) * 10 * s;
         }
         if (sh.y > FEET_Y + 10 || sh.x < -60 || sh.x > W + 60) {
           sh.done = true;
@@ -618,9 +619,15 @@
           bl.done = true;
           continue;
         }
-        // shoot smoke clouds apart
+        // shoot smoke clouds apart, and shoot cards and foam out of the air
         for (const sh of this.shots) {
-          if (sh.kind === "smoke" && !sh.done && dist(bl, sh) < sh.r) {
+          if ((sh.kind === "card" || sh.kind === "foam") && !sh.done && dist(bl, sh) < sh.r + 6) {
+            bl.done = true;
+            sh.done = true;
+            this.popup(sh.kind === "card" ? "✂" : "plop", sh.x, sh.y, "#ffffff");
+            break;
+          }
+          if (sh.kind === "smoke" && !sh.done && dist(bl, sh) < sh.r + 4) {
             bl.done = true;
             sh.flash = 80;
             if (--sh.hp <= 0) {
@@ -635,7 +642,7 @@
           bl.done = true;
           b.hp--;
           b.flash = 60;
-          if (b.phase === 0 && b.hp <= BOSS_HP / 2) {
+          if (b.phase === 0 && b.hp <= b.maxHp / 2) {
             b.phase = 1;
             this.popup("Hij wordt BOOS!", b.x, b.y + 90, "#ff6b6b");
           }
@@ -788,7 +795,7 @@
       ctx.fillStyle = "rgba(0,0,0,0.5)";
       ctx.fillRect(W / 2 - 130, 10, 260, 12);
       ctx.fillStyle = b.phase === 1 ? "#ff5050" : "#e0a030";
-      ctx.fillRect(W / 2 - 130, 10, 260 * Math.max(0, b.hp / BOSS_HP), 12);
+      ctx.fillRect(W / 2 - 130, 10, 260 * Math.max(0, b.hp / b.maxHp), 12);
       ctx.fillStyle = "#fff";
       ctx.font = "bold 11px Segoe UI, Roboto, sans-serif";
       ctx.textAlign = "center";
@@ -809,7 +816,7 @@
     },
 
     hud() {
-      return `${cfg().name} · ${Math.max(0, Math.ceil((this.boss.hp / BOSS_HP) * 100))}%`;
+      return `${cfg().name} · ${Math.max(0, Math.ceil((this.boss.hp / this.boss.maxHp) * 100))}%`;
     },
   };
 })();

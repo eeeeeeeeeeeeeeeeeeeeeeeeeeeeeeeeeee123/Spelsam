@@ -1,43 +1,49 @@
 (() => {
   const { W, H } = G;
-  const SPEED = 125;
-  const BOOST_SPEED = 300;
-  const BOOST_MS = 220;
+  const SPEED = 130;
+  const TURN = 6;
+  const BOOST_SPEED = 320;
+  const BOOST_MS = 230;
   const BOOST_COOLDOWN = 1100;
-  const SAW_MS = 500;
-  const SAW_COOLDOWN = 650;
-  const SAW_RANGE = 34;
-  const SAW_DMG = 10;
-  const BOOST_DMG = 6;
-  const RAM_DMG = 8;
+  const SAW_MS = 450;
+  const SAW_COOLDOWN = 1000;
+  const SAW_RANGE = 40;
+  const SAW_ARC = 0.7; // the saw only cuts in front of you
+  const SAW_DMG = 9;
+  const BOOST_DMG = 7;
+  const RAM_DMG = 9;
   const RAM_COOLDOWN = 900;
-  const KNOCK = 60;
+  const KNOCK = 55;
   const BOOST_KNOCK = 150;
-  const PIT = { x: W / 2, y: H / 2, r: 46 };
+  const ORBIT = 85;
   const ARENA = { x: 40, y: 70, w: W - 80, h: H - 100 };
-  const ROUNDS = [{ hp: 30, spd: 95, col: "#d05030" }, { hp: 45, spd: 115, col: "#30a0d0" }, { hp: 60, spd: 140, col: "#a040d0" }];
+  const ROUNDS = [
+    { hp: 30, spd: 105, dash: 230, col: "#d05030", name: "Brander" },
+    { hp: 40, spd: 120, dash: 260, col: "#30a0d0", name: "Kraker" },
+    { hp: 50, spd: 135, dash: 290, col: "#a040d0", name: "Sloper" },
+  ];
   const KO_MS = 1400;
 
   const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  const angDiff = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
   const clampArena = (p, r) => {
     p.x = G.clamp(p.x, ARENA.x + r, ARENA.x + ARENA.w - r);
     p.y = G.clamp(p.y, ARENA.y + r, ARENA.y + ARENA.h - r);
   };
 
-  function drawRobot(ctx, r, t, body, saw) {
+  function drawRobot(ctx, r, t, body, saw, sawReady) {
     ctx.save();
     ctx.translate(r.x, r.y);
     ctx.rotate(r.angle || 0);
-    if (saw) {
-      ctx.fillStyle = "#ccc";
-      ctx.beginPath();
-      for (let i = 0; i < 8; i++) {
-        const a = (i / 8) * Math.PI * 2 + t * 30;
-        ctx.lineTo(Math.cos(a) * 22, Math.sin(a) * 22);
-        ctx.lineTo(Math.cos(a + 0.2) * 15, Math.sin(a + 0.2) * 15);
-      }
-      ctx.fill();
+    // saw blade on the front
+    ctx.fillStyle = saw ? "#eee" : sawReady ? "#999" : "#555";
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2 + (saw ? t * 30 : 0);
+      ctx.lineTo(20 + Math.cos(a) * 11, Math.sin(a) * 11);
+      ctx.lineTo(20 + Math.cos(a + 0.2) * 7, Math.sin(a + 0.2) * 7);
     }
+    ctx.fill();
     ctx.fillStyle = r.flash > 0 ? "#fff" : body;
     ctx.fillRect(-15, -15, 30, 30);
     ctx.fillStyle = "#222";
@@ -55,29 +61,28 @@
     intro:
       "Je bouwt een vechtrobot voor de arena.<br>" +
       "Rijd met de <strong>pijltjes / WASD</strong>, zaag met <strong>SPATIE</strong>, <strong>boost</strong> met <strong>B</strong>.<br>" +
-      "Sla de vijand kapot of duw hem in de <strong>vuurput</strong> in het midden. 3 rondes, elke robot sterker.",
+      "Je zaag zit alleen aan de <strong>voorkant</strong>! De vijand probeert om je heen te rijden en je van <strong>achteren of opzij</strong> te rammen. Blijf hem aankijken. 3 rondes, elke robot sterker.",
 
     drawBackground(ctx, t) {
-      this.drawArena(ctx, t);
+      this.drawArena(ctx);
     },
 
-    drawArena(ctx, t) {
+    drawArena(ctx) {
       ctx.fillStyle = "#2a2a30";
       ctx.fillRect(0, 0, W, H);
       ctx.fillStyle = "#3a3a44";
       ctx.fillRect(ARENA.x, ARENA.y, ARENA.w, ARENA.h);
+      ctx.strokeStyle = "rgba(255,255,255,0.05)";
+      ctx.lineWidth = 1;
+      for (let x = ARENA.x; x < ARENA.x + ARENA.w; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, ARENA.y);
+        ctx.lineTo(x, ARENA.y + ARENA.h);
+        ctx.stroke();
+      }
       ctx.strokeStyle = "#ffd24a";
       ctx.lineWidth = 3;
       ctx.strokeRect(ARENA.x, ARENA.y, ARENA.w, ARENA.h);
-      // pit
-      const g = ctx.createRadialGradient(PIT.x, PIT.y, 6, PIT.x, PIT.y, PIT.r);
-      g.addColorStop(0, "#ffd24a");
-      g.addColorStop(0.5, "#ff6a1a");
-      g.addColorStop(1, "#8a1a1a");
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(PIT.x, PIT.y, PIT.r + Math.sin((t || 0) * 5) * 2, 0, Math.PI * 2);
-      ctx.fill();
     },
 
     start(api) {
@@ -93,7 +98,7 @@
 
     spawnEnemy() {
       const r = ROUNDS[this.round];
-      this.enemy = { x: ARENA.x + ARENA.w - 60, y: H / 2, hp: r.hp, maxHp: r.hp, spd: r.spd, col: r.col, angle: Math.PI, ramCd: 0, flash: 0 };
+      this.enemy = { x: ARENA.x + ARENA.w - 60, y: H / 2, hp: r.hp, maxHp: r.hp, spd: r.spd, dash: r.dash, col: r.col, name: r.name, angle: Math.PI, ramCd: 0, flash: 0, state: "circle", timer: 1200, side: 1 };
     },
 
     popup(text, x, y, color) { this.popups.push({ text, x, y, color, life: 700 }); },
@@ -105,13 +110,19 @@
       p.sawCd = SAW_COOLDOWN;
     },
 
-    onDirection(dx, dy, repeat) {},
+    onDirection() {},
 
     tryBoost() {
       const p = this.player;
       if (this.over || this.ko || p.boostCd > 0) return;
       p.boost = BOOST_MS;
       p.boostCd = BOOST_COOLDOWN;
+    },
+
+    // is `o` in front of the player, inside the saw's arc?
+    inFront(o) {
+      const p = this.player;
+      return Math.abs(angDiff(Math.atan2(o.y - p.y, o.x - p.x), p.angle)) < SAW_ARC;
     },
 
     update(dt, t) {
@@ -134,60 +145,91 @@
             this.round++;
             if (this.round >= ROUNDS.length) { this.over = true; this.api.complete(); return; }
             this.ko = 0; this.koWho = null;
-            this.player.x = ARENA.x + 60; this.player.y = H / 2; this.player.hp = Math.min(50, this.player.hp + 15);
+            p.x = ARENA.x + 60; p.y = H / 2; p.angle = 0; p.hp = Math.min(50, p.hp + 15);
             this.spawnEnemy();
           } else { this.over = true; this.api.fail("Je robot ging kapot in de arena."); }
         }
         return;
       }
 
-      // player move
+      // player: steer, robot turns smoothly toward the stick direction
       const mx = (G.held.right ? 1 : 0) - (G.held.left ? 1 : 0);
       const my = (G.held.down ? 1 : 0) - (G.held.up ? 1 : 0);
       const spd = p.boost > 0 ? BOOST_SPEED : SPEED;
       if (mx || my) {
+        const want = Math.atan2(my, mx);
+        p.angle += G.clamp(angDiff(want, p.angle), -TURN * s, TURN * s);
         const len = Math.hypot(mx, my);
         p.x += (mx / len) * spd * s;
         p.y += (my / len) * spd * s;
-        p.angle = Math.atan2(my, mx);
+      } else if (p.boost > 0) {
+        p.x += Math.cos(p.angle) * spd * s;
+        p.y += Math.sin(p.angle) * spd * s;
       }
       clampArena(p, 15);
 
-      // enemy AI: drive at player and ram
+      // enemy AI: circle around you, then dash in from the side or back
       e.ramCd = Math.max(0, e.ramCd - dt);
+      e.timer -= dt;
       const d = dist(e, p) || 1;
-      e.angle = Math.atan2(p.y - e.y, p.x - e.x);
-      e.x += ((p.x - e.x) / d) * e.spd * s;
-      e.y += ((p.y - e.y) / d) * e.spd * s;
-      clampArena(e, 15);
-
-      // collision / combat
-      if (d < 34) {
-        // player saw damages enemy
-        if (p.saw > 0 && dist(p, e) < SAW_RANGE) {
-          e.hp -= SAW_DMG * s * 6;
-          e.flash = 120;
-          this.knock(e, p, KNOCK * s * 6);
+      const toP = Math.atan2(p.y - e.y, p.x - e.x);
+      const behind = !this.inFront(e);
+      if (e.state === "circle") {
+        const around = Math.atan2(e.y - p.y, e.x - p.x) + e.side * 0.5;
+        const tx = p.x + Math.cos(around) * ORBIT, ty = p.y + Math.sin(around) * ORBIT;
+        const td = Math.hypot(tx - e.x, ty - e.y) || 1;
+        e.x += ((tx - e.x) / td) * e.spd * s;
+        e.y += ((ty - e.y) / td) * e.spd * s;
+        e.angle = toP;
+        // when it's behind you (or your saw is cooling down), it attacks
+        if (e.timer <= 0 && (behind || p.sawCd > 300)) {
+          e.state = "dash";
+          e.timer = 650;
         }
-        if (p.boost > 0) {
-          e.hp -= BOOST_DMG;
-          e.flash = 150;
-          this.knock(e, p, BOOST_KNOCK);
-          p.boost = 0;
-        }
-        // enemy rams player
-        if (e.ramCd <= 0 && p.boost <= 0 && p.saw <= 0) {
-          e.ramCd = RAM_COOLDOWN;
-          p.hp -= RAM_DMG;
-          p.flash = 200;
-          this.knock(p, e, KNOCK);
-          this.popup(`-${RAM_DMG}`, p.x, p.y - 26, "#ff6b6b");
+        // in front of an active saw? dodge to the other side
+        if (p.saw > 0 && !behind && d < 90) e.side = Math.sign(angDiff(Math.atan2(e.y - p.y, e.x - p.x), p.angle)) || 1;
+      } else if (e.state === "dash") {
+        e.angle += G.clamp(angDiff(toP, e.angle), -4 * s, 4 * s);
+        e.x += Math.cos(e.angle) * e.dash * s;
+        e.y += Math.sin(e.angle) * e.dash * s;
+        if (e.timer <= 0) {
+          e.state = "circle";
+          e.timer = 900 + Math.random() * 900;
+          if (Math.random() < 0.4) e.side = -e.side;
         }
       }
+      clampArena(e, 15);
 
-      // pit damage
-      if (dist(p, PIT) < PIT.r - 6) { p.hp -= 30 * s; p.flash = 100; }
-      if (dist(e, PIT) < PIT.r - 6) { e.hp -= 40 * s; e.flash = 100; }
+      // collisions
+      if (dist(e, p) < 34) {
+        const front = this.inFront(e);
+        if (p.saw > 0 && front) {
+          // ran into your saw
+          e.hp -= SAW_DMG;
+          e.flash = 150;
+          p.saw = 0;
+          this.knock(e, p, KNOCK * 1.5);
+          this.popup(`-${SAW_DMG}`, e.x, e.y - 26, "#ffe066");
+          e.state = "circle";
+          e.timer = 1000;
+        } else if (p.boost > 0 && front) {
+          e.hp -= BOOST_DMG;
+          e.flash = 150;
+          p.boost = 0;
+          this.knock(e, p, BOOST_KNOCK);
+          this.popup(`-${BOOST_DMG}`, e.x, e.y - 26, "#ffe066");
+        } else if (e.ramCd <= 0) {
+          e.ramCd = RAM_COOLDOWN;
+          const dmg = front ? Math.round(RAM_DMG * 0.6) : RAM_DMG;
+          p.hp -= dmg;
+          p.flash = 200;
+          this.knock(p, e, KNOCK);
+          this.knock(e, p, 20);
+          this.popup(front ? `-${dmg}` : `-${dmg} van achteren!`, p.x, p.y - 26, "#ff6b6b");
+          e.state = "circle";
+          e.timer = 1100;
+        }
+      }
 
       if (e.hp <= 0) { this.ko = KO_MS; this.koWho = "enemy"; this.popup("KAPOT!", e.x, e.y - 30, "#6ee07a"); }
       else if (p.hp <= 0) { this.ko = KO_MS; this.koWho = "player"; }
@@ -201,18 +243,33 @@
     },
 
     render(ctx, t) {
-      this.drawArena(ctx, t);
+      this.drawArena(ctx);
       const p = this.player, e = this.enemy;
-      if (!(this.ko && this.koWho === "enemy")) drawRobot(ctx, e, t, e.flash > 0 ? "#fff" : e.col, false);
-      if (!(this.ko && this.koWho === "player")) drawRobot(ctx, p, t, "#4a8a4a", p.saw > 0);
+      if (e.state === "dash" && !this.ko) {
+        ctx.strokeStyle = "rgba(255,80,80,0.5)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(e.x, e.y);
+        ctx.lineTo(e.x - Math.cos(e.angle) * 30, e.y - Math.sin(e.angle) * 30);
+        ctx.stroke();
+      }
+      if (!(this.ko && this.koWho === "enemy")) drawRobot(ctx, e, t, e.col, false, false);
+      if (!(this.ko && this.koWho === "player")) {
+        // saw arc indicator
+        ctx.fillStyle = p.saw > 0 ? "rgba(255,224,102,0.25)" : "rgba(255,255,255,0.06)";
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.arc(p.x, p.y, SAW_RANGE + 8, p.angle - SAW_ARC, p.angle + SAW_ARC);
+        ctx.closePath();
+        ctx.fill();
+        drawRobot(ctx, p, t, "#4a8a4a", p.saw > 0, p.sawCd <= 0);
+      }
 
-      // enemy hp bar
       ctx.fillStyle = "rgba(0,0,0,0.5)";
       ctx.fillRect(e.x - 18, e.y - 28, 36, 5);
       ctx.fillStyle = "#e05050";
       ctx.fillRect(e.x - 18, e.y - 28, 36 * Math.max(0, e.hp / e.maxHp), 5);
 
-      // HUD
       ctx.fillStyle = "rgba(0,0,0,0.4)";
       ctx.fillRect(16, 20, 160, 14);
       ctx.fillStyle = "#6ee07a";
@@ -220,10 +277,12 @@
       ctx.fillStyle = "#fff";
       ctx.font = "bold 13px Segoe UI, Roboto, sans-serif";
       ctx.textAlign = "right";
-      ctx.fillText(`Ronde ${this.round + 1} / ${ROUNDS.length}`, W - 12, 32);
+      ctx.fillText(`Ronde ${this.round + 1} / ${ROUNDS.length} · ${e.name}`, W - 12, 32);
       ctx.textAlign = "left";
+      ctx.fillStyle = p.sawCd > 0 ? "#888" : "#ffd24a";
+      ctx.fillText(p.sawCd > 0 ? "zaag…" : "SPATIE zaag", 16, 50);
       ctx.fillStyle = p.boostCd > 0 ? "#888" : "#ffd24a";
-      ctx.fillText(p.boostCd > 0 ? "boost…" : "B boost", 16, 48);
+      ctx.fillText(p.boostCd > 0 ? "boost…" : "B boost", 110, 50);
 
       if (this.ko) G.drawBanner(ctx, this.koWho === "enemy" ? "Vijand kapot!" : "Je robot is kapot...", this.koWho === "enemy" ? "#6ee07a" : "#ff6b6b", 60);
       G.drawPopups(ctx, this.popups);

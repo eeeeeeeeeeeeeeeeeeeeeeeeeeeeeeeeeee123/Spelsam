@@ -373,17 +373,50 @@
   });
 
   // On-canvas choice buttons, selectable with ←/→ + SPACE or by tapping.
-  G.makeChoice = (options) => ({
+  // Pass { list: true } for long sentences: one full-width row per option.
+  G.makeChoice = (options, opts = {}) => ({
     options,
     selected: 0,
     rects: [],
-    onDirection(dx) {
-      if (dx) this.selected = G.clamp(this.selected + dx, 0, this.options.length - 1);
+    onDirection(dx, dy) {
+      const step = dx || (this.list ? dy : 0);
+      if (step) this.selected = G.clamp(this.selected + step, 0, this.options.length - 1);
     },
+    list: !!opts.list,
     hit(x, y) {
       return this.rects.findIndex((r) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h);
     },
+    drawList(ctx, t) {
+      const n = this.options.length;
+      const h = 30, gap = 5, w = G.W - 60;
+      const top = G.H - 22 - n * (h + gap);
+      this.rects = this.options.map((_, i) => ({ x: 30, y: top + i * (h + gap), w, h }));
+      this.options.forEach((label, i) => {
+        const r = this.rects[i];
+        const sel = i === this.selected;
+        ctx.fillStyle = sel ? "#ffffff" : "rgba(20, 16, 36, 0.88)";
+        ctx.beginPath();
+        ctx.roundRect(r.x, r.y, r.w, r.h, 15);
+        ctx.fill();
+        if (sel) {
+          ctx.strokeStyle = `rgba(255, 210, 74, ${0.75 + Math.sin(t * 6) * 0.25})`;
+          ctx.lineWidth = 3;
+          ctx.stroke();
+        }
+        let size = 15;
+        ctx.font = `bold ${size}px Segoe UI, Roboto, sans-serif`;
+        while (ctx.measureText(label).width > r.w - 44 && size > 10) ctx.font = `bold ${--size}px Segoe UI, Roboto, sans-serif`;
+        ctx.fillStyle = sel ? "#1c1a2a" : "#eef2ff";
+        ctx.textAlign = "left";
+        ctx.fillText(`${sel ? "▶" : " "}  ${label}`, r.x + 12, r.y + r.h / 2 + size * 0.36);
+      });
+      ctx.fillStyle = "rgba(255,255,255,0.7)";
+      ctx.font = "12px Segoe UI, Roboto, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("↑ ↓ kiezen · SPATIE bevestigen (of tik)", G.W / 2, G.H - 6);
+    },
     draw(ctx, t) {
+      if (this.list) return this.drawList(ctx, t);
       const n = this.options.length;
       const gap = n > 2 ? 14 : 30;
       const w = Math.min(180, (G.W - 40 - gap * (n - 1)) / n);

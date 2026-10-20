@@ -1,7 +1,7 @@
 (() => {
   const { W, H } = G;
-  const PLAYER = { x: 155, y: 330 };
-  const DATE = { x: 385, y: 330 };
+  const PLAYER = { x: W / 2 - 92 };
+  const DATE = { x: W / 2 + 92 };
   const DATE_LOOK = { ...G.SKINS.wit, hair: "lang", hairColor: "#7a4a2a", eyes: G.EYES.groen, gender: "meisje", shirt: "#d070a0", pants: "#3a3550" };
   const FADE_MS = 2600;
   const KISS_MS = 1800;
@@ -42,44 +42,89 @@
     },
   ];
 
+  const SEAT_Y = 252;
+  const SCALE = 1.15;
+  // in the sit pose the hips sit 30px (adult) above the feet line
+  const SIT_Y = SEAT_Y + 30 * SCALE;
+  const TABLE = { x: W / 2, top: 236, w: 150 };
+
   function drawCafe(ctx, t) {
     const g = ctx.createLinearGradient(0, 0, 0, H);
     g.addColorStop(0, "#2a1f3a");
     g.addColorStop(1, "#3a2a4a");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
+    // floor
+    ctx.fillStyle = "#2a2030";
+    ctx.fillRect(0, SIT_Y - 4, W, H - SIT_Y + 4);
     // string lights
+    ctx.strokeStyle = "rgba(255,255,255,0.15)";
+    ctx.beginPath();
+    ctx.moveTo(0, 30);
+    for (let i = 0; i < 9; i++) ctx.lineTo(i * 70, 40 + Math.sin(i) * 8);
+    ctx.stroke();
     for (let i = 0; i < 8; i++) {
       ctx.fillStyle = ["#ffd24a", "#ff8a8a", "#8affd0"][i % 3];
       ctx.beginPath();
       ctx.arc(30 + i * 70, 40 + Math.sin(i) * 8, 4, 0, Math.PI * 2);
       ctx.fill();
     }
-    // table
+  }
+
+  function drawChair(ctx, x, facing) {
+    ctx.fillStyle = "#6a3a2a";
+    // backrest behind the person
+    ctx.fillRect(x - facing * 22 - 3, SEAT_Y - 52, 6, 56);
+    // seat
+    ctx.fillRect(x - facing * 22, SEAT_Y, facing * 40, 7);
+    // legs
+    ctx.fillRect(x - facing * 20 - 2, SEAT_Y + 7, 4, SIT_Y - SEAT_Y - 7);
+    ctx.fillRect(x + facing * 14 - 2, SEAT_Y + 7, 4, SIT_Y - SEAT_Y - 7);
+  }
+
+  function drawTable(ctx, t) {
+    const { x, top, w } = TABLE;
     ctx.fillStyle = "#5a3a2a";
-    ctx.fillRect(W / 2 - 55, 360, 110, 50);
-    ctx.fillStyle = "#6a4a3a";
+    ctx.fillRect(x - 6, top + 8, 12, SIT_Y - top - 8);
+    ctx.fillRect(x - 30, SIT_Y - 6, 60, 6);
+    ctx.fillStyle = "#7a4e36";
     ctx.beginPath();
-    ctx.ellipse(W / 2, 360, 60, 14, 0, 0, Math.PI * 2);
+    ctx.roundRect(x - w / 2, top, w, 10, 4);
     ctx.fill();
     // candle
-    ctx.fillStyle = "#ffd24a";
+    ctx.fillStyle = "#f4ead0";
+    ctx.fillRect(x - 3, top - 14, 6, 14);
+    ctx.fillStyle = `rgba(255,200,60,${0.8 + Math.sin(t * 9) * 0.2})`;
     ctx.beginPath();
-    ctx.arc(W / 2, 348, 5, 0, Math.PI * 2);
+    ctx.ellipse(x, top - 18, 3, 5, 0, 0, Math.PI * 2);
     ctx.fill();
+    // two drinks
+    for (const dx of [-45, 45]) {
+      ctx.fillStyle = "rgba(200,230,255,0.5)";
+      ctx.fillRect(x + dx - 5, top - 16, 10, 16);
+      ctx.fillStyle = "#e86a8a";
+      ctx.fillRect(x + dx - 4, top - 9, 8, 8);
+    }
+  }
+
+  function drawScene(ctx, t, o = {}) {
+    drawCafe(ctx, t);
+    drawChair(ctx, DATE.x, -1);
+    drawChair(ctx, o.px ?? PLAYER.x, 1);
+    G.drawKid(ctx, DATE.x, SIT_Y, SCALE, DATE_LOOK, { adult: true, pose: o.stand ? "stand" : "sit", facing: -1, t, sad: o.sad, eyesClosed: o.kiss });
+    G.drawKid(ctx, o.px ?? PLAYER.x, SIT_Y, SCALE, G.playerKidLook(), { adult: true, pose: o.stand ? "stand" : "sit", facing: 1, t, eyesClosed: o.kiss });
+    if (!o.stand) drawTable(ctx, t);
   }
 
   G.c3level9 = {
     title: "Level 9 — De date (19 jaar)",
     intro:
       "Je hebt een <strong>date</strong> met een leuk meisje. Maak een goede indruk.<br>" +
-      "Kies steeds de <strong>juiste zin</strong> met <strong>← →</strong> en <strong>SPATIE</strong>, of tik.<br>" +
+      "Kies steeds de <strong>juiste zin</strong> met <strong>↑ ↓</strong> en <strong>SPATIE</strong>, of tik.<br>" +
       "<strong>Respect en luisteren</strong> is de sleutel — opdringerig zijn verpest het.",
 
     drawBackground(ctx, t) {
-      drawCafe(ctx, t);
-      G.drawKid(ctx, DATE.x, DATE.y, 1.15, DATE_LOOK, { adult: true, pose: "sit", facing: -1, t });
-      G.drawKid(ctx, PLAYER.x, PLAYER.y, 1.15, G.playerKidLook(), { adult: true, pose: "sit", t });
+      drawScene(ctx, t);
     },
 
     start(api) {
@@ -93,13 +138,13 @@
 
     setScene() {
       const sc = SCENES[this.index];
-      this.choice = G.makeChoice(sc.options);
+      this.choice = G.makeChoice(sc.options, { list: true });
       this.phase = "talk";
       this.lineTimer = 1500;
     },
 
-    onDirection(dx) {
-      if (this.phase === "choose") this.choice.onDirection(dx);
+    onDirection(dx, dy) {
+      if (this.phase === "choose") this.choice.onDirection(dx, dy);
     },
     onAction() {
       if (this.phase === "choose") this.pick(this.choice.selected);
@@ -148,18 +193,19 @@
     },
 
     render(ctx, t) {
-      drawCafe(ctx, t);
       const sc = SCENES[this.index];
 
       if (this.phase === "kiss" || this.phase === "fade") {
+        // they stand up outside, she by the door, you step closer
         const k = this.phase === "kiss" ? 1 - this.timer / KISS_MS : 1;
-        const px = PLAYER.x + (DATE.x - 70 - PLAYER.x) * Math.min(1, k);
-        G.drawKid(ctx, DATE.x, DATE.y, 1.15, DATE_LOOK, { adult: true, facing: -1, t, eyesClosed: true });
-        G.drawKid(ctx, px, PLAYER.y, 1.15, G.playerKidLook(), { adult: true, facing: 1, t, eyesClosed: true });
+        const px = PLAYER.x + (DATE.x - 46 - PLAYER.x) * Math.min(1, k);
+        drawCafe(ctx, t);
+        G.drawKid(ctx, DATE.x, SIT_Y, SCALE, DATE_LOOK, { adult: true, facing: -1, t, eyesClosed: k > 0.7 });
+        G.drawKid(ctx, px, SIT_Y, SCALE, G.playerKidLook(), { adult: true, facing: 1, t, eyesClosed: k > 0.7 });
         if (this.phase === "kiss" && k > 0.6) {
           ctx.font = "22px serif";
           ctx.textAlign = "center";
-          ctx.fillText("❤", (px + DATE.x) / 2, 250 + Math.sin(t * 4) * 6);
+          ctx.fillText("❤", (px + DATE.x) / 2, SIT_Y - 125 + Math.sin(t * 4) * 6);
         }
         if (this.phase === "fade") {
           const f = 1 - this.timer / FADE_MS;
@@ -175,12 +221,11 @@
         return;
       }
 
-      G.drawKid(ctx, DATE.x, DATE.y, 1.15, DATE_LOOK, { adult: true, pose: "sit", facing: -1, t, sad: this.phase === "reject" });
-      G.drawKid(ctx, PLAYER.x, PLAYER.y, 1.15, G.playerKidLook(), { adult: true, pose: "sit", t });
+      drawScene(ctx, t, { sad: this.phase === "reject" });
 
       if (this.phase === "reject") {
         G.drawBanner(ctx, "Ze loopt weg...", "#ff6b6b", 70);
-        G.drawBubble(ctx, DATE.x, DATE.y - 140, "Sorry, ik ga naar huis.");
+        G.drawBubble(ctx, DATE.x, SIT_Y - 128, "Sorry, ik ga naar huis.");
         return;
       }
 
@@ -190,7 +235,7 @@
       ctx.fillText("❤".repeat(this.affection) + "♡".repeat(SCENES.length - this.affection), 14, 24);
 
       if (this.phase === "talk" || this.phase === "choose") {
-        G.drawBubble(ctx, DATE.x, DATE.y - 150, sc.line);
+        G.drawBubble(ctx, DATE.x - 20, SIT_Y - 140, sc.line);
       }
       if (this.phase === "choose") this.choice.draw(ctx, t);
     },
