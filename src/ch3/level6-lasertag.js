@@ -136,7 +136,7 @@
           y: WH / 2 + Math.sin(a) * 230,
           hp: BOT_HP,
           color: COLORS[i],
-          look: G.randomLook({ shirt: [COLORS[i]] }),
+          look: G.randomLook({ shirt: COLORS[i] }),
           alive: true,
           goal: null,
           goalT: 0,
