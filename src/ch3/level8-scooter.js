@@ -10,9 +10,10 @@
   const POLICE_MS = 5000;
   const POLICE_SPEED = 70;
   const TIRE_HP = 3;
-  const CATCH_RANGE = 90;
-  const CATCH_RATE = 26;
-  const CATCH_DRAIN = 20;
+  const CATCH_RANGE = 110;
+  const CATCH_RATE = 48;
+  const CATCH_DRAIN = 14;
+  const WEAVE = 95;
 
   const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
@@ -125,7 +126,7 @@
       }
       for (const o of this.obstacles) {
         o.y += SCROLL * s;
-        if (!o.hit && dist(o, p) < 30) { o.hit = true; this.crash = 600; this.flash = 300; this.catch = Math.min(100, this.catch + 18); this.popup("CRASH!", p.x, p.y - 30, "#ff6b6b"); }
+        if (!o.hit && dist(o, p) < 24) { o.hit = true; this.crash = 600; this.flash = 300; this.catch = Math.min(100, this.catch + 18); this.popup("CRASH!", p.x, p.y - 30, "#ff6b6b"); }
       }
       this.obstacles = this.obstacles.filter((o) => o.y < H + 40);
 
@@ -133,32 +134,31 @@
       this.policeTimer -= dt;
       if (this.policeTimer <= 0 && this.police.length < 2) {
         this.policeTimer = POLICE_MS;
-        this.police.push({ x: ROAD.x + 30 + Math.random() * (ROAD.w - 60), y: H + 30, tire: TIRE_HP, spin: 0 });
+        this.police.push({ x: ROAD.x + 30 + Math.random() * (ROAD.w - 60), y: H + 30, tire: TIRE_HP, spin: 0, seed: Math.random() * 10, freq: 1.4 + Math.random() * 0.8 });
       }
       let chasing = false;
       for (const c of this.police) {
         if (c.spin > 0) { c.spin -= dt; c.y += SCROLL * 1.5 * s; c.x += c.spinVx * s; continue; }
-        // drive up toward player, but steer around traffic ahead
-        let dx = p.x - c.x;
-        const ahead = this.obstacles.find((o) => !o.hit && o.y < c.y + 10 && c.y - o.y < 110 && Math.abs(o.x - c.x) < 40);
+        // weave criss-cross behind you instead of sitting straight on your tail
+        const wt = this.scroll / SCROLL;
+        let tx = p.x + Math.sin(wt * c.freq + c.seed) * WEAVE;
+        const ty = p.y + 55 + Math.sin(wt * c.freq * 0.7 + c.seed * 2) * 30;
+        // steer well clear of traffic ahead
+        const ahead = this.obstacles.find((o) => !o.hit && o.y < c.y + 20 && c.y - o.y < 170 && Math.abs(o.x - c.x) < 46);
         if (ahead) {
-          const roomLeft = ahead.x - ROAD.x, roomRight = ROAD.x + ROAD.w - ahead.x;
-          const goRight = c.x > ahead.x ? roomRight > 45 : roomLeft < 45;
-          dx = (goRight ? 1 : -1) * 100;
+          const goRight = c.x >= ahead.x ? ahead.x + 60 < ROAD.x + ROAD.w - 16 : ahead.x - 60 < ROAD.x + 16;
+          tx = ahead.x + (goRight ? 62 : -62);
         }
-        c.x += Math.sign(dx) * Math.min(Math.abs(dx), POLICE_SPEED * (ahead ? 1.8 : 1) * s);
+        const dx = tx - c.x;
+        c.x += Math.sign(dx) * Math.min(Math.abs(dx), POLICE_SPEED * (ahead ? 2.6 : 1.5) * s);
         c.x = G.clamp(c.x, ROAD.x + 16, ROAD.x + ROAD.w - 16);
-        // still bumped into a car? it spins out
-        const bump = this.obstacles.find((o) => !o.hit && Math.abs(o.x - c.x) < 28 && Math.abs(o.y - c.y) < 44);
-        if (bump) {
-          bump.hit = true;
-          c.spin = 1200;
-          c.spinVx = (c.x < bump.x ? -1 : 1) * 160;
-          this.popup("BOTSING!", c.x, c.y - 20, "#ffd24a");
-          continue;
+        // last resort: slide past a car instead of crashing into it
+        for (const o of this.obstacles) {
+          if (o.hit || Math.abs(o.y - c.y) > 46 || Math.abs(o.x - c.x) > 32) continue;
+          c.x = G.clamp(c.x + (c.x >= o.x ? 1 : -1) * 32, ROAD.x + 16, ROAD.x + ROAD.w - 16);
         }
-        if (c.y > p.y + 40) c.y -= (POLICE_SPEED * 0.7) * s;
-        else c.y += (SCROLL * 0.02) * s;
+        const dy = G.clamp(ty, 140, H - 10) - c.y;
+        c.y += Math.sign(dy) * Math.min(Math.abs(dy), POLICE_SPEED * 0.9 * s);
         if (dist(c, p) < CATCH_RANGE) chasing = true;
       }
       this.police = this.police.filter((c) => c.y < H + 60 && !(c.spin > 0 && c.y > H + 40));
