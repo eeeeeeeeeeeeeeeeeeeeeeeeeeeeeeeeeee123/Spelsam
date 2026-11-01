@@ -31,6 +31,22 @@
         text: "Je bent 20 en hebt je verslaving verslagen. Je hebt de tienerjaren overleefd: op naar het volwassen leven!",
       },
     },
+    {
+      name: "Hoofdstuk 4: Volwassen (21–30 jaar)",
+      short: "H4",
+      levels: [G.c4level1, ...[2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => G.careerSlot(n))],
+      win: {
+        get title() {
+          return `${(G.CAREERS[G.career] || G.CAREERS.soldaat).emoji} Missie volbracht!`;
+        },
+        get emoji() {
+          return (G.CAREERS[G.career] || G.CAREERS.soldaat).emoji;
+        },
+        get text() {
+          return `Je bent 30 en je carrière als ${(G.CAREERS[G.career] || G.CAREERS.soldaat).label.toLowerCase()} zit erop. Speel opnieuw om een andere carrière te kiezen!`;
+        },
+      },
+    },
   ];
 
   const canvas = document.getElementById("gameCanvas");
@@ -117,6 +133,7 @@
     $("baby").textContent = w.emoji;
     $("winText").textContent = w.text;
     $("nextChapterBtn").classList.toggle("hidden", chapter === CHAPTERS.length - 1);
+    $("nextChapterBtn").textContent = `Door naar hoofdstuk ${chapter + 2}`;
     showScreen("win");
     startConfetti();
   }
@@ -355,6 +372,7 @@
   onButton("chapter1Btn", () => startChapter(0));
   onButton("chapter2Btn", () => startChapter(1));
   onButton("chapter3Btn", () => startChapter(2));
+  onButton("chapter4Btn", () => startChapter(3));
   onButton("appearanceBtn", showCreator);
   onButton("creatorDoneBtn", () => {
     G.setAppearance(draft);
