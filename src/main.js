@@ -43,7 +43,7 @@
           return (G.CAREERS[G.career] || G.CAREERS.soldaat).emoji;
         },
         get text() {
-          return `Je bent 30 en je carrière als ${(G.CAREERS[G.career] || G.CAREERS.soldaat).label.toLowerCase()} zit erop. Speel opnieuw om een andere carrière te kiezen!`;
+          return `Je bent 30 en je carrière als ${(G.CAREERS[G.career] || G.CAREERS.soldaat).label} zit erop. Speel opnieuw om een andere carrière te kiezen!`;
         },
       },
     },
@@ -350,7 +350,12 @@
     return { x: ((e.clientX - r.left) * canvas.width) / r.width, y: ((e.clientY - r.top) * canvas.height) / r.height };
   }
 
+  // whether the mouse button is held on the canvas (for hold-to-fire weapons)
+  G.mouseDown = false;
+  window.addEventListener("pointerup", () => (G.mouseDown = false));
+  window.addEventListener("blur", () => (G.mouseDown = false));
   canvas.addEventListener("pointerdown", (e) => {
+    G.mouseDown = true;
     if (mode !== "playing") return;
     const p = canvasPoint(e);
     if (level().onPointer) level().onPointer(p.x, p.y);
