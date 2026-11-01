@@ -18,8 +18,8 @@
   // levels 2..10 per career, filled in by each career's level files
   G.CAREER_LEVELS = {};
   for (const id of G.CAREER_IDS) G.CAREER_LEVELS[id] = {};
-  // a career is playable once its levels exist
-  G.careerReady = (id) => Object.keys(G.CAREER_LEVELS[id]).length > 0;
+  // a career is playable once its final level exists
+  G.careerReady = (id) => !!G.CAREER_LEVELS[id][10];
 
   const careerId = () => (G.CAREERS[G.career] ? G.career : "soldaat");
 
@@ -80,6 +80,30 @@
     ctx.arc(cx, cy, 17 * s, Math.PI, 0);
     ctx.fill();
     ctx.fillRect(cx - 19 * s, cy - 1 * s, 38 * s, 4 * s);
+  };
+
+  // spy gear: dark suit, sunglasses
+  G.spyLook = (base = G.playerKidLook()) => ({ ...base, shirt: "#22242c", pants: "#15161a" });
+  G.drawShades = (ctx, x, y, s, facing = 1, adult = true) => {
+    const ey = y + ((adult ? -22 : -2) - 55) * s;
+    ctx.fillStyle = "#0a0a0a";
+    ctx.beginPath();
+    ctx.roundRect(x + facing * 1 * s - (facing < 0 ? 15 * s : 0), ey - 3 * s, 15 * s, 6 * s, 2 * s);
+    ctx.fill();
+  };
+  // North Korean guards and police: olive uniform with a peaked cap
+  G.NK_LOOK = () => ({ ...G.randomLook({ shirt: "#5a6040", pants: "#4a5034", hairColor: "#1a1212", hair: "kort" }), ...G.SKINS.wit });
+  G.drawCap = (ctx, x, y, s, facing = 1, adult = true, color = "#5a6040") => {
+    const cx = x + facing * 2 * s;
+    const cy = y + ((adult ? -22 : -2) - 62) * s;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 18 * s, 7 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#c02020";
+    ctx.fillRect(cx - 16 * s, cy + 3 * s, 32 * s, 3 * s);
+    ctx.fillStyle = "#222";
+    ctx.fillRect(cx + (facing > 0 ? 4 : -18) * s, cy + 6 * s, 14 * s, 3 * s);
   };
 
   // simple rifle in the hand returned by G.drawKid
