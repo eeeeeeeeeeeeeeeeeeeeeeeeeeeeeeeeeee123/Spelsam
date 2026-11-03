@@ -5,7 +5,7 @@
   G.CAREERS = {
     soldaat: { label: "Amerikaanse soldaat", short: "Soldaat", color: "#6aa0ff", emoji: "🪖" },
     spion: { label: "Spion in Noord-Korea", short: "Spion", color: "#ff6a6a", emoji: "🕵️" },
-    president: { label: "Parodie-president", short: "President", color: "#ffd24a", emoji: "🎩" },
+    president: { label: "President Goudkuif", short: "President", color: "#ffd24a", emoji: "🎩" },
     huurmoordenaar: { label: "Huurmoordenaar", short: "Huurmoordenaar", color: "#c0c0c0", emoji: "🎯" },
     marine: { label: "Space marine", short: "Space marine", color: "#7affd0", emoji: "👽" },
   };
