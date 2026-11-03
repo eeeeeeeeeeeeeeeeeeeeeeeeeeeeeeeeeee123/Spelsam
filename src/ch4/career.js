@@ -106,6 +106,25 @@
     ctx.fillRect(cx + (facing > 0 ? 4 : -18) * s, cy + 6 * s, 14 * s, 3 * s);
   };
 
+  // President Goudkuif: navy suit, red tie, a golden quiff
+  G.presLook = (base = G.playerKidLook()) => ({ ...base, shirt: "#1c2a5a", pants: "#141c3a", hairColor: "#f0c030", hair: "kort" });
+  G.drawQuiff = (ctx, x, y, s, facing = 1, adult = true) => {
+    const hy = y + ((adult ? -22 : -2) - 66) * s;
+    ctx.fillStyle = "#f0c030";
+    ctx.beginPath();
+    ctx.ellipse(x + facing * 6 * s, hy, 16 * s, 7 * s, facing * -0.35, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#ffe070";
+    ctx.beginPath();
+    ctx.ellipse(x + facing * 10 * s, hy - 2 * s, 7 * s, 3 * s, facing * -0.35, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  G.drawTie = (ctx, x, y, s, adult = true) => {
+    const ty = y + ((adult ? -30 : -18) - (adult ? 26 : 18)) * s;
+    ctx.fillStyle = "#c02020";
+    ctx.fillRect(x - 1.5 * s, ty, 3 * s, 14 * s);
+  };
+
   // simple rifle in the hand returned by G.drawKid
   G.drawRifle = (ctx, hand, angle, facing, s = 1, flash = false) => {
     ctx.save();
