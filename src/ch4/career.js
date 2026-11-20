@@ -125,6 +125,9 @@
     ctx.fillRect(x - 1.5 * s, ty, 3 * s, 14 * s);
   };
 
+  // the hitman: black suit, red tie
+  G.hitLook = (base = G.playerKidLook()) => ({ ...base, shirt: "#141414", pants: "#141414", hairColor: "#2a1a12", hair: "kort" });
+
   // simple rifle in the hand returned by G.drawKid
   G.drawRifle = (ctx, hand, angle, facing, s = 1, flash = false) => {
     ctx.save();
